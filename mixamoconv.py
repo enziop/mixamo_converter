@@ -30,8 +30,13 @@ def HipToRoot(armature, use_z = True, on_ground = True):
     root = armature
     root.name = "root"
     framerange = root.animation_data.action.frame_range
-
-    hips = root.pose.bones["mixamorig:Hips"]
+    
+    for hipname in ('Hips', 'mixamorig:Hips'):
+        hips = root.pose.bones.get(hipname)
+        if hips != None:
+            break
+    if hips == None:
+        return -1
     z_offset = hips.bone.head.y * root.scale.y
 
     #Create helper to bake the root motion
@@ -44,7 +49,7 @@ def HipToRoot(armature, use_z = True, on_ground = True):
         bpy.ops.object.constraint_add(type='COPY_LOCATION')
         bpy.context.object.constraints["Copy Location"].name = "Copy Z_Loc"
         bpy.context.object.constraints["Copy Z_Loc"].target = root
-        bpy.context.object.constraints["Copy Z_Loc"].subtarget = "mixamorig:Hips"
+        bpy.context.object.constraints["Copy Z_Loc"].subtarget = hips.name
         bpy.context.object.constraints["Copy Z_Loc"].use_x = False
         bpy.context.object.constraints["Copy Z_Loc"].use_y = False
         bpy.context.object.constraints["Copy Z_Loc"].use_z = True
@@ -58,11 +63,11 @@ def HipToRoot(armature, use_z = True, on_ground = True):
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].use_z = False
     bpy.context.object.constraints["Copy Location"].target = root
-    bpy.context.object.constraints["Copy Location"].subtarget = "mixamorig:Hips"
+    bpy.context.object.constraints["Copy Location"].subtarget = hips.name
 
     bpy.ops.object.constraint_add(type='COPY_ROTATION')
     bpy.context.object.constraints["Copy Rotation"].target = root
-    bpy.context.object.constraints["Copy Rotation"].subtarget = "mixamorig:Hips"
+    bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
     bpy.context.object.constraints["Copy Rotation"].use_y = False
     bpy.context.object.constraints["Copy Rotation"].use_x = False
 
@@ -75,11 +80,11 @@ def HipToRoot(armature, use_z = True, on_ground = True):
 
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].target = root
-    bpy.context.object.constraints["Copy Location"].subtarget = "mixamorig:Hips"
+    bpy.context.object.constraints["Copy Location"].subtarget = hips.name
 
     bpy.ops.object.constraint_add(type='COPY_ROTATION')
     bpy.context.object.constraints["Copy Rotation"].target = root
-    bpy.context.object.constraints["Copy Rotation"].subtarget = "mixamorig:Hips"
+    bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True, clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
 
@@ -116,6 +121,7 @@ def HipToRoot(armature, use_z = True, on_ground = True):
     rootBaker.select = True
 
     bpy.ops.object.delete(use_global=False)
+    return 1
     
 #End of HipToRoot Function
 
@@ -146,7 +152,8 @@ def BatchHipToRoot(source_dir, dest_dir, use_z = True, on_ground = True):
             #armature = bpy.data.objects["Armature"]
             mesh_obj = armature.children[0]
             #do hip to Root conversion
-            HipToRoot(armature)
+            if HipToRoot(armature) == -1:
+                return -1
             #remove newly created orphan actions
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:
