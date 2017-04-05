@@ -23,6 +23,7 @@ one of them should be named Mixamo
 
 ### Options: [Use Vertical] [On Ground]
 it will behave as follows in Unreal Engine 4
+Only rotation along the Up Axis is transfered to the root
 ##### Both Enabled (recommended):
 A Root bone which stays on ground except for cases when the Hip moves higher than its restpose location
 ##### Only [Use Vertical] Enabled:
@@ -30,8 +31,6 @@ the root bone can go below the Ground
 this will result in wierd behaviour if one Big Collider is used for the Character in Unreal
 ##### [Use Vertical] is Disabled
 no Vertical motion at all is transfered to the Root and [On Ground] becomes obsolete
-
-Only rotation along the Up Axis is transfered to the root
 
 ### Batch Conversion:
 * Here you can specify an Input- and Outputpath for Batchconversion
