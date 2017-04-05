@@ -23,17 +23,18 @@ one of them should be named Mixamo
 
 ### Options: [Use Vertical] [On Ground]
 it will behave as follows in Unreal Engine 4
-#### Both Enabled (recommended):
-    A Root bone which stays on ground except for cases when the Hip moves higher than its restpose location
-#### Only [Use Vertical] Enabled:
-    the root bone can go below the Ground
-    this will result in wierd behaviour if one Big Collider is used for the Character in Unreal
-#### [Use Vertical] is Disabled
-    no Vertical motion at all is transfered to the Root and [On Ground] becomes obsolete
+##### Both Enabled (recommended):
+A Root bone which stays on ground except for cases when the Hip moves higher than its restpose location
+##### Only [Use Vertical] Enabled:
+the root bone can go below the Ground
+this will result in wierd behaviour if one Big Collider is used for the Character in Unreal
+##### [Use Vertical] is Disabled
+no Vertical motion at all is transfered to the Root and [On Ground] becomes obsolete
+
 Only rotation along the Up Axis is transfered to the root
 
 ### Batch Conversion:
-* Here you can specify an Input- and Outpupath for Batchconversion
+* Here you can specify an Input- and Outputpath for Batchconversion
 * the output files will have the same names as the input files, existing files will be overwritten
 * The [force overwrite] option is only for the case where Input- and Outputlocation are the same
 * If input and output path are set you can press [Batch Convert] to convert all FBX files from source location and save it to target location
