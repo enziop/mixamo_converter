@@ -149,8 +149,6 @@ def BatchHipToRoot(source_dir, dest_dir, use_z = True, on_ground = True):
                     if a.type == 'ARMATURE':
                         return a
             armature = getArmature(bpy.context.selected_objects)
-            #armature = bpy.data.objects["Armature"]
-            mesh_obj = armature.children[0]
             #do hip to Root conversion
             if HipToRoot(armature) == -1:
                 return -1
@@ -158,15 +156,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_z = True, on_ground = True):
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:
                     bpy.data.actions.remove(action, do_unlink=True)
-            '''
-            for mesh in bpy.data.meshes:
-                if mesh != mesh_obj.data:
-                    bpy.data.meshes.remove(mesh, do_unlink=True)
-            
-            for material in bpy.data.materials:
-                if material.users == 0:
-                    bpy.data.materials.remove(material, do_unlink=True)
-            '''
+
             bpy.ops.export_scene.fbx(filepath=dest_dir + file.name, use_selection=False)
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)

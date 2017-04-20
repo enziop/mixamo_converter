@@ -1,5 +1,6 @@
 # Mixamo Converter
 is a Blender Plugin that Converts Mixamo animations to work in Unreal Engine 4 with root motion
+Blender 2.78 or newer needed to work
 
 ### It can
 * convert single animations if they are previously imported by the user
