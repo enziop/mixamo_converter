@@ -63,6 +63,12 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     maxlen = 256,
                     default = "",
                     subtype='FILE_PATH')
+    hipname = bpy.props.StringProperty(
+                    name="Hip Name",
+                    description="Additional Hipname to search for if not MixamoRig",
+                    maxlen = 256,
+                    default = "",
+                    subtype='BYTE_STRING')
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -77,7 +83,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips'):
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
         self.report({'INFO'}, "Rig Converted")
@@ -107,7 +113,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             return{'CANCELLED'}
         if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground)
+        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, hipname = bpy.context.scene.mixamo.hipname)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -142,6 +148,8 @@ class MixamoconvPanel(bpy.types.Panel):
         row = box.row()
         row.prop(scene.mixamo, "use_vertical")
         row.prop(scene.mixamo, "on_ground")
+        row = box.row()
+        row.prop(scene.mixamo, "hipname")
         # Button for conversion of single Selected rig
         row = box.row()
         row.scale_y = 2.0

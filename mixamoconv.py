@@ -25,13 +25,13 @@ import os
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
-def HipToRoot(armature, use_z = True, on_ground = True):
+def HipToRoot(armature, use_z = True, on_ground = True, hipname=''):
 
     root = armature
     root.name = "root"
     framerange = root.animation_data.action.frame_range
     
-    for hipname in ('Hips', 'mixamorig:Hips'):
+    for hipname in ('Hips', 'mixamorig:Hips', hipname):
         hips = root.pose.bones.get(hipname)
         if hips != None:
             break
