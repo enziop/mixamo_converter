@@ -42,7 +42,7 @@ no Vertical motion at all is transfered to the Root and [On Ground] becomes obso
 * The source location should only contain FBX files containing original mixamo rigs otherwise the script will not work
 * files not ending with .fbx are ignored and can stay in source directory
 
-### !!!ATTETION!!!
+### ATTENTION!
 Batch Convert will delete everything from your currently open blenderscene
 so only use it in a newly startet instance of blender or an empty scene
     
