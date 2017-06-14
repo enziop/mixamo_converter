@@ -25,20 +25,28 @@ import os
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
-def HipToRoot(armature, use_z = True, on_ground = True):
+def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, hipname=''):
 
     root = armature
     root.name = "root"
     framerange = root.animation_data.action.frame_range
     
-    for hipname in ('Hips', 'mixamorig:Hips'):
+    for hipname in ('Hips', 'mixamorig:Hips', hipname):
         hips = root.pose.bones.get(hipname)
         if hips != None:
             break
     if hips == None:
         return -1
     z_offset = hips.bone.head.y * root.scale.y
-
+    
+    #Scale by ScaleFactor
+    if scale != 1.0:
+        for i in range(3):
+            fcurve = root.animation_data.action.fcurves.find('scale', i)
+            if fcurve != None:
+                root.animation_data.action.fcurves.remove(fcurve)
+        root.scale *= scale
+    
     #Create helper to bake the root motion
     bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
     rootBaker = bpy.context.object
@@ -61,6 +69,8 @@ def HipToRoot(armature, use_z = True, on_ground = True):
             bpy.context.object.constraints["Limit Location"].use_min_z = True        
 
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
+    bpy.context.object.constraints["Copy Location"].use_x = use_x
+    bpy.context.object.constraints["Copy Location"].use_y = use_y
     bpy.context.object.constraints["Copy Location"].use_z = False
     bpy.context.object.constraints["Copy Location"].target = root
     bpy.context.object.constraints["Copy Location"].subtarget = hips.name
@@ -112,7 +122,9 @@ def HipToRoot(armature, use_z = True, on_ground = True):
     hips.constraints["Copy Rotation"].target = hipsBaker
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True, clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'POSE'})
-
+    
+    
+    
     #Delete helpers
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
@@ -128,7 +140,7 @@ def HipToRoot(armature, use_z = True, on_ground = True):
 '''
 Batch Convert MixamoRigs
 '''
-def BatchHipToRoot(source_dir, dest_dir, use_z = True, on_ground = True):
+def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, hipname = ''):
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -150,7 +162,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_z = True, on_ground = True):
                         return a
             armature = getArmature(bpy.context.selected_objects)
             #do hip to Root conversion
-            if HipToRoot(armature) == -1:
+            if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, hipname = hipname) == -1:
                 return -1
             #remove newly created orphan actions
             for action in bpy.data.actions:

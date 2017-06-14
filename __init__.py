@@ -22,13 +22,13 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
     "warning": "",  # used for warning icon and text in addons panel
-    "wiki_url": "",
-    "tracker_url": "" ,
+    "wiki_url": "https://github.com/enziop/mixamo_converter/wiki",
+    "tracker_url": "https://github.com/enziop/mixamo_converter/issues" ,
     "category": "Animation"
 }
 
@@ -37,6 +37,14 @@ from . import mixamoconv
 
 class MixamoPropertyGroup(bpy.types.PropertyGroup):
     '''Property container for options and paths of mixamo Converter'''
+    use_x = bpy.props.BoolProperty(
+                    name="Use X",
+                    description="If enabled, Horizontal motion is transfered to RootBone",
+                    default=True)
+    use_y = bpy.props.BoolProperty(
+                    name="Use Y",
+                    description="If enabled, Horizontal motion is transfered to RootBone",
+                    default=True)
     use_vertical = bpy.props.BoolProperty(
                     name="Use Vertical",
                     description="If enabled, vertical motion is transfered to RootBone",
@@ -45,7 +53,11 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="On Ground",
                     description="If enabled, root bone is on ground and only moves up at jumps",
                     default=True)
-                    
+    scale = bpy.props.FloatProperty(
+                    name="Scale",
+                    description="Scale down the Rig by this factor",
+                    default=1.0)
+    
     force_overwrite = bpy.props.BoolProperty(
                     name="Force Overwrite",
                     description="If enabled, overwrites files if output path is the same as input",
@@ -63,6 +75,12 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     maxlen = 256,
                     default = "",
                     subtype='FILE_PATH')
+    hipname = bpy.props.StringProperty(
+                    name="Hip Name",
+                    description="Additional Hipname to search for if not MixamoRig",
+                    maxlen = 256,
+                    default = "",
+                    subtype='BYTE_STRING')
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -77,11 +95,11 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips'):
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
         self.report({'INFO'}, "Rig Converted")
-        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground)
+        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -107,7 +125,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             return{'CANCELLED'}
         if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground)
+        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -140,8 +158,15 @@ class MixamoconvPanel(bpy.types.Panel):
         box = layout.box()
         # Options for how to do the conversion
         row = box.row()
+        row.prop(scene.mixamo, "use_x")
+        row.prop(scene.mixamo, "use_y")
+        row = box.row()
         row.prop(scene.mixamo, "use_vertical")
         row.prop(scene.mixamo, "on_ground")
+        row = box.row()
+        row.prop(scene.mixamo, "hipname")
+        row = box.row()
+        row.prop(scene.mixamo, "scale")
         # Button for conversion of single Selected rig
         row = box.row()
         row.scale_y = 2.0

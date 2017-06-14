@@ -33,6 +33,17 @@ this will result in wierd behaviour if one Big Collider is used for the Characte
 ##### [Use Vertical] is Disabled
 no Vertical motion at all is transfered to the Root and [On Ground] becomes obsolete
 
+#### Options: [Use X] [Use Y]
+Those can be disabled to prevent movement of root on groundplane.
+Useful if one doesn't want to use root motion for some Animations but still needs to have the same converted rig. If so just disable Use Vertical, Use X and Use Y.
+
+#### Option [Hip Name]
+Here you can specify a custom HipName if your Rig doesn't come from Mixamo. It will then also search for a bone with this name and consider it as Hip to bake From if found.
+
+#### Option [Scale]
+Scaling factor for unit conversion problems. Sometimes the scale of the root is keyed resulting in Scaling of Character if you apply the animation to your skeleton in Unreal.
+If set to something else than 1.0 it will remove existing scaling keys and scale the skeleton by this factor.
+
 ### Batch Conversion:
 * Here you can specify an Input- and Outputpath for Batchconversion
 * the output files will have the same names as the input files, existing files will be overwritten
