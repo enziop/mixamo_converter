@@ -40,7 +40,12 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
     z_offset = hips.bone.head.y * root.scale.y
     
     #Scale by ScaleFactor
-    root.scale *= scale
+    if scale != 1.0:
+        for i in range(3):
+            fcurve = root.animation_data.action.fcurves.find('scale', i)
+            if fcurve != None:
+                root.animation_data.action.fcurves.remove(fcurve)
+        root.scale *= scale
     
     #Create helper to bake the root motion
     bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))

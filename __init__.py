@@ -22,13 +22,13 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
     "warning": "",  # used for warning icon and text in addons panel
-    "wiki_url": "",
-    "tracker_url": "" ,
+    "wiki_url": "https://github.com/enziop/mixamo_converter/wiki",
+    "tracker_url": "https://github.com/enziop/mixamo_converter/issues" ,
     "category": "Animation"
 }
 
