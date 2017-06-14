@@ -37,6 +37,10 @@ from . import mixamoconv
 
 class MixamoPropertyGroup(bpy.types.PropertyGroup):
     '''Property container for options and paths of mixamo Converter'''
+    advanced = bpy.props.BoolProperty(
+                    name="Advanced Options",
+                    description="Display advanced options",
+                    default=False)
     use_x = bpy.props.BoolProperty(
                     name="Use X",
                     description="If enabled, Horizontal motion is transfered to RootBone",
@@ -57,6 +61,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Scale",
                     description="Scale down the Rig by this factor",
                     default=1.0)
+    restoffset = bpy.props.FloatVectorProperty(
+                    name="Restpose Offset",
+                    description="Offset restpose by this. Use to correct if origin is not on ground",
+                    default=(0.0, 0.0, 0.0))
     
     force_overwrite = bpy.props.BoolProperty(
                     name="Force Overwrite",
@@ -81,6 +89,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     maxlen = 256,
                     default = "",
                     subtype='BYTE_STRING')
+    fixbind = bpy.props.BoolProperty(
+                    name="Fix Bind",
+                    description="If enabled, adds a dummy mesh and binds it, to prevent loss of bindpose when exporting fbx",
+                    default=True)
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -99,7 +111,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
         self.report({'INFO'}, "Rig Converted")
-        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
+        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, restoffset = context.scene.mixamo.restoffset, hipname = bpy.context.scene.mixamo.hipname, fixbind = bpy.context.scene.mixamo.fixbind)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -125,7 +137,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             return{'CANCELLED'}
         if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
+        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, restoffset = context.scene.mixamo.restoffset, hipname = bpy.context.scene.mixamo.hipname, fixbind = bpy.context.scene.mixamo.fixbind)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -158,20 +170,30 @@ class MixamoconvPanel(bpy.types.Panel):
         box = layout.box()
         # Options for how to do the conversion
         row = box.row()
-        row.prop(scene.mixamo, "use_x")
-        row.prop(scene.mixamo, "use_y")
-        row = box.row()
         row.prop(scene.mixamo, "use_vertical")
         row.prop(scene.mixamo, "on_ground")
-        row = box.row()
-        row.prop(scene.mixamo, "hipname")
-        row = box.row()
-        row.prop(scene.mixamo, "scale")
+        
         # Button for conversion of single Selected rig
         row = box.row()
         row.scale_y = 2.0
         row.operator("mixamo.convertsingle")
         
+        box = layout.box()
+        row = box.row()
+        row.prop(scene.mixamo, "advanced", toggle=True)
+        if scene.mixamo.advanced:
+            row = box.row()
+            row.prop(scene.mixamo, "use_x")
+            row.prop(scene.mixamo, "use_y")
+            row = box.row()
+            row.prop(scene.mixamo, "hipname")
+            row = box.row()
+            row.prop(scene.mixamo, "fixbind")
+            row = box.row()
+            row.prop(scene.mixamo, "scale")
+            split = box.split()
+            col = split.column()
+            col.prop(scene.mixamo, "restoffset")
         
         box = layout.box()
         # input and output paths for batch conversion
