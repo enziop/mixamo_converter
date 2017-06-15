@@ -22,6 +22,22 @@
 import bpy
 import os
 
+
+def ApplyRestoffset(armature, hipbone, restoffset):
+    # apply rest offset to restpose
+    bpy.context.scene.objects.active = armature
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.armature.select_all(action='SELECT')
+    bpy.ops.transform.translate(value=restoffset, constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # apply restoffset to animation of hip
+    restoffset_local = (restoffset[0], restoffset[2], -restoffset[1])
+    for axis in range(3):
+        fcurve = armature.animation_data.action.fcurves.find("pose.bones[\""+hipbone.name+"\"].location", axis)
+        for pi in range(len(fcurve.keyframe_points)):
+            fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/armature.scale.x
+    return 1
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
@@ -37,7 +53,7 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
             break
     if hips == None:
         return -1
-    z_offset = hips.bone.head.y * root.scale.y
+    
     
     #Scale by ScaleFactor
     if scale != 1.0:
@@ -47,19 +63,11 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
                 root.animation_data.action.fcurves.remove(fcurve)
         root.scale *= scale
     
-    # apply rest offset to restpose
-    bpy.context.scene.objects.active = root
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.armature.select_all(action='SELECT')
-    bpy.ops.transform.translate(value=restoffset, constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
-    bpy.ops.object.mode_set(mode='OBJECT')
-
-    # apply restoffset to animation of hip
-    restoffset_local = (restoffset[0], restoffset[2], -restoffset[1])
-    for axis in range(3):
-        fcurve = root.animation_data.action.fcurves.find("pose.bones[\""+hips.name+"\"].location", axis)
-        for pi in range(len(fcurve.keyframe_points)):
-            fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/root.scale.x
+    #apply restoffset to restpose and correct animation
+    ApplyRestoffset(root, hips, restoffset)
+    
+    hiplocation_world = root.matrix_local * hips.bone.head
+    z_offset = hiplocation_world[2]
     
     #Create helper to bake the root motion
     bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
