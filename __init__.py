@@ -110,13 +110,35 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
-        self.report({'INFO'}, "Rig Converted")
         status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, restoffset = context.scene.mixamo.restoffset, hipname = bpy.context.scene.mixamo.hipname, fixbind = bpy.context.scene.mixamo.fixbind)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
+        self.report({'INFO'}, "Rig Converted")
         return{'FINISHED'}
 
+class OBJECT_OT_ApplyRestoffet(bpy.types.Operator):
+    '''Button/Operator for converting single Rig'''
+    bl_idname = "mixamo.applyrestoffset"
+    bl_label = "Apply Restoffset"
+    description = "Applies Restoffset to restpose and corrects animation"
+    
+    def execute(self, context):
+        if bpy.context.object == None:
+            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
+            return{'CANCELLED'}
+        if bpy.context.object.type != 'ARMATURE':
+            self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
+            return{'CANCELLED'}
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
+            self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
+            return{'CANCELLED'}
+        status = mixamoconv.ApplyRestoffset(bpy.context.object, bpy.context.object.data.bones[0], context.scene.mixamo.restoffset)
+        if status == -1:
+            self.report({'ERROR_INVALID_INPUT'}, 'ApplyRestoffset Failed')
+            return{'CANCELLED'}
+        return{'FINISHED'}
+        
 class OBJECT_OT_ConvertBatch(bpy.types.Operator):
     '''Button/Operator for starting batch conversion'''
     bl_idname = "mixamo.convertbatch"
@@ -191,6 +213,8 @@ class MixamoconvPanel(bpy.types.Panel):
             row.prop(scene.mixamo, "fixbind")
             row = box.row()
             row.prop(scene.mixamo, "scale")
+            row = box.row()
+            row.operator("mixamo.applyrestoffset")
             split = box.split()
             col = split.column()
             col.prop(scene.mixamo, "restoffset")
