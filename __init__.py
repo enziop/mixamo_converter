@@ -49,8 +49,8 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Use Y",
                     description="If enabled, Horizontal motion is transfered to RootBone",
                     default=True)
-    use_vertical = bpy.props.BoolProperty(
-                    name="Use Vertical",
+    use_z = bpy.props.BoolProperty(
+                    name="Use Z",
                     description="If enabled, vertical motion is transfered to RootBone",
                     default=True)
     on_ground = bpy.props.BoolProperty(
@@ -138,11 +138,11 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
-        status = mixamoconv.HipToRoot(
+        status = mixamoconv.hip_to_root(
             armature = bpy.context.object,
             use_x = context.scene.mixamo.use_x,
             use_y = context.scene.mixamo.use_y,
-            use_z = context.scene.mixamo.use_vertical,
+            use_z = context.scene.mixamo.use_z,
             on_ground = context.scene.mixamo.on_ground,
             scale = context.scene.mixamo.scale,
             restoffset = context.scene.mixamo.restoffset,
@@ -155,9 +155,9 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         self.report({'INFO'}, "Rig Converted")
         return{'FINISHED'}
 
-class OBJECT_OT_ApplyRestoffet(bpy.types.Operator):
+class OBJECT_OT_ApplyRestoffset(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
-    bl_idname = "mixamo.applyrestoffset"
+    bl_idname = "mixamo.apply_restoffset"
     bl_label = "Apply Restoffset"
     description = "Applies Restoffset to restpose and corrects animation"
     
@@ -171,9 +171,9 @@ class OBJECT_OT_ApplyRestoffet(bpy.types.Operator):
         if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
-        status = mixamoconv.ApplyRestoffset(bpy.context.object, bpy.context.object.data.bones[0], context.scene.mixamo.restoffset)
+        status = mixamoconv.apply_restoffset(bpy.context.object, bpy.context.object.data.bones[0], context.scene.mixamo.restoffset)
         if status == -1:
-            self.report({'ERROR_INVALID_INPUT'}, 'ApplyRestoffset Failed')
+            self.report({'ERROR_INVALID_INPUT'}, 'apply_restoffset Failed')
             return{'CANCELLED'}
         return{'FINISHED'}
         
@@ -197,12 +197,12 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             return{'CANCELLED'}
         if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(
+        numfiles = mixamoconv.batch_hip_to_root(
             bpy.path.abspath(inpath),
             bpy.path.abspath(outpath),
             use_x = context.scene.mixamo.use_x,
             use_y = context.scene.mixamo.use_y,
-            use_z = context.scene.mixamo.use_vertical,
+            use_z = context.scene.mixamo.use_z,
             on_ground = context.scene.mixamo.on_ground,
             scale = context.scene.mixamo.scale,
             restoffset = context.scene.mixamo.restoffset,
@@ -243,8 +243,9 @@ class MixamoconvPanel(bpy.types.Panel):
         box = layout.box()
         # Options for how to do the conversion
         row = box.row()
-        row.prop(scene.mixamo, "use_vertical")
-        row.prop(scene.mixamo, "on_ground")
+        row.prop(scene.mixamo, "use_z")
+        if scene.mixamo.use_z:
+            row.prop(scene.mixamo, "on_ground")
         
         # Button for conversion of single Selected rig
         row = box.row()
@@ -258,6 +259,7 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "use_x")
             row.prop(scene.mixamo, "use_y")
+            row.prop(scene.mixamo, "use_z")
             row = box.row()
             row.prop(scene.mixamo, "hipname")
             row = box.row()
@@ -265,11 +267,12 @@ class MixamoconvPanel(bpy.types.Panel):
             row.operator("mixamo.remove_namespace")
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
+            row.prop(scene.mixamo, "add_leaf_bones")
             row.prop(scene.mixamo, "apply_transform")
             row = box.row()
             row.prop(scene.mixamo, "scale")
             row = box.row()
-            row.operator("mixamo.applyrestoffset")
+            row.operator("mixamo.apply_restoffset")
             split = box.split()
             col = split.column()
             col.prop(scene.mixamo, "restoffset")
