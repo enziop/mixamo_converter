@@ -38,10 +38,11 @@ def ApplyRestoffset(armature, hipbone, restoffset):
         for pi in range(len(fcurve.keyframe_points)):
             fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/armature.scale.x
     return 1
+      
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
-def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True):
+def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_transform = True):
 
     root = armature
     root.name = "root"
@@ -120,10 +121,14 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True, clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
 
-    #Bake Root motion to Armature (root)
+    #select armature
     root.select = True
     bpy.context.scene.objects.active = root
-
+    
+    if apply_transform:
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    
+    #Bake Root motion to Armature (root)
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].target = rootBaker
 
@@ -158,14 +163,14 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
     
     # bind armature to dummy mesh if it doesn't have any
     if fixbind:
-        hasbind = False
+        bindmesh = None
         for child in root.children:
             for mod in child.modifiers:
                 if mod.type == 'ARMATURE':
                     if mod.object == root:
-                        hasbind = True
+                        bindmesh = child
                         break
-        if not hasbind:
+        if bindmesh == None:
             bpy.ops.object.select_all(action='DESELECT')
             bpy.ops.mesh.primitive_plane_add(radius=1, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
             binddummy = bpy.context.object
@@ -173,6 +178,10 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
             root.select = True
             bpy.context.scene.objects.active = root
             bpy.ops.object.parent_set(type='ARMATURE')
+        elif apply_transform:
+            bindmesh.select = True
+            bpy.context.scene.objects.active = bindmesh
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
     
     return 1
     
@@ -181,7 +190,7 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
 '''
 Batch Convert MixamoRigs
 '''
-def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True):
+def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True):
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -203,7 +212,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
                         return a
             armature = getArmature(bpy.context.selected_objects)
             #do hip to Root conversion
-            if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind) == -1:
+            if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_transform = apply_transform) == -1:
                 return -1
             #remove newly created orphan actions
             for action in bpy.data.actions:
