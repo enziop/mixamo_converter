@@ -20,9 +20,26 @@
 '''
 
 import bpy
+from bpy_types import Object
 import os
 
+#function for removing all namespaces from strings, objects or even armatrure bones
+def remove_namespace(s = ''):
+    if type(s) == str:
+        i = s[::-1].find(':')
+        if i == -1:
+            return s
+        else:
+            return s[-i::]
+    elif type(s) == Object:
+        if s.type == 'ARMATURE':
+            for bone in s.data.bones:
+                bone.name = remove_namespace(bone.name)
+        s.name = remove_namespace(s.name)
+        return 1
+    return -1
 
+#function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet
 def ApplyRestoffset(armature, hipbone, restoffset):
     # apply rest offset to restpose
     bpy.context.scene.objects.active = armature
@@ -38,7 +55,7 @@ def ApplyRestoffset(armature, hipbone, restoffset):
         for pi in range(len(fcurve.keyframe_points)):
             fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/armature.scale.x
     return 1
-      
+
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
@@ -190,7 +207,7 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
 '''
 Batch Convert MixamoRigs
 '''
-def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True):
+def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, remove_namespace = True):
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -204,8 +221,13 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
                 bpy.data.materials.remove(material, do_unlink=True)
             for action in bpy.data.actions:
                     bpy.data.actions.remove(action, do_unlink=True)
-            #imprt FBX
+            #import FBX
             bpy.ops.import_scene.fbx(filepath=file.path, axis_forward='-Z', axis_up='Y', directory="", filter_glob="*.fbx", ui_tab='MAIN', use_manual_orientation=False, global_scale=1, bake_space_transform=False, use_custom_normals=True, use_image_search=True, use_alpha_decals=False, decal_offset=0, use_anim=True, anim_offset=1, use_custom_props=True, use_custom_props_enum_as_string=True, ignore_leaf_bones=True, force_connect_children=False, automatic_bone_orientation=False, primary_bone_axis='Y', secondary_bone_axis='X', use_prepost_rot=True)
+            #namespace removal
+            if remove_namespace:
+                for obj in bpy.context.selcted_objects:
+                    remove_namespace(obj)
+            
             def getArmature(objects):
                 for a in objects:
                     if a.type == 'ARMATURE':
@@ -214,6 +236,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
             #do hip to Root conversion
             if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_transform = apply_transform) == -1:
                 return -1
+            
             #remove newly created orphan actions
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:

@@ -22,7 +22,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 2),
+    "version": (1, 0, 3),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -65,7 +65,6 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Restpose Offset",
                     description="Offset restpose by this. Use to correct if origin is not on ground",
                     default=(0.0, 0.0, 0.0))
-    
     force_overwrite = bpy.props.BoolProperty(
                     name="Force Overwrite",
                     description="If enabled, overwrites files if output path is the same as input",
@@ -97,6 +96,27 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Apply Transform",
                     description="Applies transform during conversion to prevent rotation and scaling issues",
                     default=True)
+    remove_namespace = bpy.props.BoolProperty(
+                    name="Remove Namespace",
+                    description="Removes Naespaces from objects and bones",
+                    default=True)               
+
+class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
+    '''Button/Operator for removing namespaces from selection'''
+    bl_idname = "mixamo.remove_namespace"
+    bl_label = "Remove Namespace"
+    description = "Removes all namespaces of selection"
+    
+    def execute(self, context):
+        if bpy.context.object == None:
+            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
+            return{'CANCELLED'}
+        for obj in bpy.context.selected_objects:
+            status = mixamoconv.remove_namespace(obj)
+            if status == -1:
+                self.report({'ERROR_INVALID_INPUT'}, 'Invalid Object in selection')
+                return{'CANCELLED'}
+        return{'FINISHED'}
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -234,6 +254,9 @@ class MixamoconvPanel(bpy.types.Panel):
             row.prop(scene.mixamo, "use_y")
             row = box.row()
             row.prop(scene.mixamo, "hipname")
+            row = box.row()
+            row.prop(scene.mixamo, 'remove_namespace')
+            row.operator("mixamo.remove_namespace")
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
             row.prop(scene.mixamo, "apply_transform")
