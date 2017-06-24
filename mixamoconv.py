@@ -40,7 +40,7 @@ def remove_namespace(s = ''):
     return -1
 
 #function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet
-def ApplyRestoffset(armature, hipbone, restoffset):
+def apply_restoffset(armature, hipbone, restoffset):
     # apply rest offset to restpose
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
@@ -59,7 +59,7 @@ def ApplyRestoffset(armature, hipbone, restoffset):
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
-def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_transform = True):
+def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_transform = True):
 
     root = armature
     root.name = "root"
@@ -82,7 +82,7 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
         root.scale *= scale
     
     #apply restoffset to restpose and correct animation
-    ApplyRestoffset(root, hips, restoffset)
+    apply_restoffset(root, hips, restoffset)
     
     hiplocation_world = root.matrix_local * hips.bone.head
     z_offset = hiplocation_world[2]
@@ -202,12 +202,12 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
     
     return 1
     
-#End of HipToRoot Function
+#End of hip_to_root Function
 
 '''
 Batch Convert MixamoRigs
 '''
-def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, b_remove_namespace = True, add_leaf_bones = False):
+def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, b_remove_namespace = True, add_leaf_bones = False):
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -234,7 +234,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
                         return a
             armature = getArmature(bpy.context.selected_objects)
             #do hip to Root conversion
-            if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_transform = apply_transform) == -1:
+            if hip_to_root(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_transform = apply_transform) == -1:
                 return -1
             
             #remove newly created orphan actions
