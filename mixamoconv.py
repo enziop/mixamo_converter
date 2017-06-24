@@ -207,7 +207,7 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
 '''
 Batch Convert MixamoRigs
 '''
-def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, remove_namespace = True):
+def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, b_remove_namespace = True, add_leaf_bones = False):
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -224,8 +224,8 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
             #import FBX
             bpy.ops.import_scene.fbx(filepath=file.path, axis_forward='-Z', axis_up='Y', directory="", filter_glob="*.fbx", ui_tab='MAIN', use_manual_orientation=False, global_scale=1, bake_space_transform=False, use_custom_normals=True, use_image_search=True, use_alpha_decals=False, decal_offset=0, use_anim=True, anim_offset=1, use_custom_props=True, use_custom_props_enum_as_string=True, ignore_leaf_bones=True, force_connect_children=False, automatic_bone_orientation=False, primary_bone_axis='Y', secondary_bone_axis='X', use_prepost_rot=True)
             #namespace removal
-            if remove_namespace:
-                for obj in bpy.context.selcted_objects:
+            if b_remove_namespace:
+                for obj in bpy.context.selected_objects:
                     remove_namespace(obj)
             
             def getArmature(objects):
@@ -242,7 +242,7 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
                 if action != armature.animation_data.action:
                     bpy.data.actions.remove(action, do_unlink=True)
 
-            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name, use_selection=False)
+            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name, use_selection=False, add_leaf_bones=add_leaf_bones)
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
             print("%d files converted" % numfiles)

@@ -92,14 +92,18 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Fix Bind",
                     description="If enabled, adds a dummy mesh and binds it, to prevent loss of bindpose when exporting fbx",
                     default=True)
+    add_leaf_bones = bpy.props.BoolProperty(
+                    name="Add Leaf Bones",
+                    description="If enabled, adds leaf bones on export when batchconverting",
+                    default=False)
     apply_transform = bpy.props.BoolProperty(
                     name="Apply Transform",
                     description="Applies transform during conversion to prevent rotation and scaling issues",
                     default=True)
-    remove_namespace = bpy.props.BoolProperty(
+    b_remove_namespace = bpy.props.BoolProperty(
                     name="Remove Namespace",
                     description="Removes Naespaces from objects and bones",
-                    default=True)               
+                    default=True)
 
 class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
     '''Button/Operator for removing namespaces from selection'''
@@ -204,7 +208,9 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             restoffset = context.scene.mixamo.restoffset,
             hipname = bpy.context.scene.mixamo.hipname,
             fixbind = bpy.context.scene.mixamo.fixbind,
-            apply_transform = bpy.context.scene.mixamo.apply_transform)
+            apply_transform = bpy.context.scene.mixamo.apply_transform,
+            b_remove_namespace = bpy.context.scene.mixamo.b_remove_namespace,
+            add_leaf_bones = bpy.context.scene.mixamo.add_leaf_bones)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -255,7 +261,7 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "hipname")
             row = box.row()
-            row.prop(scene.mixamo, 'remove_namespace')
+            row.prop(scene.mixamo, 'b_remove_namespace', text="")
             row.operator("mixamo.remove_namespace")
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
