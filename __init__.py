@@ -93,6 +93,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Fix Bind",
                     description="If enabled, adds a dummy mesh and binds it, to prevent loss of bindpose when exporting fbx",
                     default=True)
+    apply_transform = bpy.props.BoolProperty(
+                    name="Apply Transform",
+                    description="Applies transform during conversion to prevent rotation and scaling issues",
+                    default=True)
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -110,7 +114,17 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
-        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, restoffset = context.scene.mixamo.restoffset, hipname = bpy.context.scene.mixamo.hipname, fixbind = bpy.context.scene.mixamo.fixbind)
+        status = mixamoconv.HipToRoot(
+            armature = bpy.context.object,
+            use_x = context.scene.mixamo.use_x,
+            use_y = context.scene.mixamo.use_y,
+            use_z = context.scene.mixamo.use_vertical,
+            on_ground = context.scene.mixamo.on_ground,
+            scale = context.scene.mixamo.scale,
+            restoffset = context.scene.mixamo.restoffset,
+            hipname = bpy.context.scene.mixamo.hipname,
+            fixbind = bpy.context.scene.mixamo.fixbind,
+            apply_transform = bpy.context.scene.mixamo.apply_transform)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -159,7 +173,18 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             return{'CANCELLED'}
         if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, restoffset = context.scene.mixamo.restoffset, hipname = bpy.context.scene.mixamo.hipname, fixbind = bpy.context.scene.mixamo.fixbind)
+        numfiles = mixamoconv.BatchHipToRoot(
+            bpy.path.abspath(inpath),
+            bpy.path.abspath(outpath),
+            use_x = context.scene.mixamo.use_x,
+            use_y = context.scene.mixamo.use_y,
+            use_z = context.scene.mixamo.use_vertical,
+            on_ground = context.scene.mixamo.on_ground,
+            scale = context.scene.mixamo.scale,
+            restoffset = context.scene.mixamo.restoffset,
+            hipname = bpy.context.scene.mixamo.hipname,
+            fixbind = bpy.context.scene.mixamo.fixbind,
+            apply_transform = bpy.context.scene.mixamo.apply_transform)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -211,6 +236,7 @@ class MixamoconvPanel(bpy.types.Panel):
             row.prop(scene.mixamo, "hipname")
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
+            row.prop(scene.mixamo, "apply_transform")
             row = box.row()
             row.prop(scene.mixamo, "scale")
             row = box.row()
