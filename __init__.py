@@ -96,10 +96,14 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Add Leaf Bones",
                     description="If enabled, adds leaf bones on export when batchconverting",
                     default=False)
-    apply_transform = bpy.props.BoolProperty(
-                    name="Apply Transform",
-                    description="Applies transform during conversion to prevent rotation and scaling issues",
+    apply_rotation = bpy.props.BoolProperty(
+                    name="Apply Rotation",
+                    description="Applies rotation during conversion to prevent rotation and scaling issues",
                     default=True)
+    apply_scale = bpy.props.BoolProperty(
+                    name="Apply Scale",
+                    description="Applies scale during conversion to prevent rotation and scaling issues",
+                    default=False)
     b_remove_namespace = bpy.props.BoolProperty(
                     name="Remove Namespace",
                     description="Removes Naespaces from objects and bones",
@@ -148,7 +152,8 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             restoffset = context.scene.mixamo.restoffset,
             hipname = bpy.context.scene.mixamo.hipname,
             fixbind = bpy.context.scene.mixamo.fixbind,
-            apply_transform = bpy.context.scene.mixamo.apply_transform)
+            apply_rotation = bpy.context.scene.mixamo.apply_rotation,
+            apply_scale = bpy.context.scene.mixamo.apply_scale)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -208,7 +213,8 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             restoffset = context.scene.mixamo.restoffset,
             hipname = bpy.context.scene.mixamo.hipname,
             fixbind = bpy.context.scene.mixamo.fixbind,
-            apply_transform = bpy.context.scene.mixamo.apply_transform,
+            apply_rotation = bpy.context.scene.mixamo.apply_rotation,
+            apply_scale = bpy.context.scene.mixamo.apply_scale,
             b_remove_namespace = bpy.context.scene.mixamo.b_remove_namespace,
             add_leaf_bones = bpy.context.scene.mixamo.add_leaf_bones)
         if numfiles == -1:
@@ -268,7 +274,9 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
             row.prop(scene.mixamo, "add_leaf_bones")
-            row.prop(scene.mixamo, "apply_transform")
+            row = box.row()
+            row.prop(scene.mixamo, "apply_rotation")
+            row.prop(scene.mixamo, "apply_scale")
             row = box.row()
             row.prop(scene.mixamo, "scale")
             row = box.row()

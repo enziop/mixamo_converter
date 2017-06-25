@@ -59,7 +59,7 @@ def apply_restoffset(armature, hipbone, restoffset):
 '''
 function to bake hipmotion to RootMotion in MixamoRigs
 '''
-def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_transform = True):
+def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_rotation = True, apply_scale = False):
 
     root = armature
     root.name = "root"
@@ -142,8 +142,8 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
     root.select = True
     bpy.context.scene.objects.active = root
     
-    if apply_transform:
-        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    if apply_rotation or apply_scale:
+        bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
     
     #Bake Root motion to Armature (root)
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
@@ -195,10 +195,10 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
             root.select = True
             bpy.context.scene.objects.active = root
             bpy.ops.object.parent_set(type='ARMATURE')
-        elif apply_transform:
+        elif apply_rotation or apply_scale:
             bindmesh.select = True
             bpy.context.scene.objects.active = bindmesh
-            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
     
     return 1
     
@@ -207,7 +207,10 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
 '''
 Batch Convert MixamoRigs
 '''
-def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_transform = True, b_remove_namespace = True, add_leaf_bones = False):
+def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_rotation = True, apply_scale = False, b_remove_namespace = True, add_leaf_bones = False):
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 0.01
+
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -234,7 +237,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
                         return a
             armature = getArmature(bpy.context.selected_objects)
             #do hip to Root conversion
-            if hip_to_root(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_transform = apply_transform) == -1:
+            if hip_to_root(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_rotation = apply_rotation, apply_scale = apply_scale) == -1:
                 return -1
             
             #remove newly created orphan actions
@@ -242,7 +245,11 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
                 if action != armature.animation_data.action:
                     bpy.data.actions.remove(action, do_unlink=True)
 
-            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name, use_selection=False, add_leaf_bones=add_leaf_bones)
+            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name,
+                version = 'BIN7400',
+                use_selection=False,
+                apply_unit_scale=False,
+                add_leaf_bones=add_leaf_bones)
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
             print("%d files converted" % numfiles)
