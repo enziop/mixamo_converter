@@ -22,7 +22,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 2),
+    "version": (1, 0, 3),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -37,6 +37,15 @@ from . import mixamoconv
 
 class MixamoPropertyGroup(bpy.types.PropertyGroup):
     '''Property container for options and paths of mixamo Converter'''
+    advanced = bpy.props.BoolProperty(
+                    name="Advanced Options",
+                    description="Display advanced options",
+                    default=False)
+    experimental = bpy.props.BoolProperty(
+                    name="Experimental Options",
+                    description="Experimental Options (use with caution, dirty workarounds)",
+                    default=False)
+    
     use_x = bpy.props.BoolProperty(
                     name="Use X",
                     description="If enabled, Horizontal motion is transfered to RootBone",
@@ -45,42 +54,100 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     name="Use Y",
                     description="If enabled, Horizontal motion is transfered to RootBone",
                     default=True)
-    use_vertical = bpy.props.BoolProperty(
-                    name="Use Vertical",
+    use_z = bpy.props.BoolProperty(
+                    name="Use Z",
                     description="If enabled, vertical motion is transfered to RootBone",
                     default=True)
     on_ground = bpy.props.BoolProperty(
                     name="On Ground",
                     description="If enabled, root bone is on ground and only moves up at jumps",
                     default=True)
+
     scale = bpy.props.FloatProperty(
                     name="Scale",
                     description="Scale down the Rig by this factor",
                     default=1.0)
-    
+    restoffset = bpy.props.FloatVectorProperty(
+                    name="Restpose Offset",
+                    description="Offset restpose by this. Use to correct if origin is not on ground",
+                    default=(0.0, 0.0, 0.0))
+    knee_offset = bpy.props.FloatVectorProperty(
+                    name="Knee Offset",
+                    description="Offset knee joints by this. Use to fix flipping legs.",
+                    default=(0.0, 0.0, 0.0))
+    knee_bones = bpy.props.StringProperty(
+                    name="Knee Bones",
+                    description="Names of knee bones to offset. Seperate names with commas.",
+                    maxlen = 256,
+                    default = "RightUpLeg,LeftUpLeg",
+                    subtype='BYTE_STRING')
     force_overwrite = bpy.props.BoolProperty(
                     name="Force Overwrite",
                     description="If enabled, overwrites files if output path is the same as input",
                     default=False)
-    
+
     inpath = bpy.props.StringProperty(
                     name="Input Path",
                     description="Path to mixamorigs",
                     maxlen = 256,
                     default = "",
                     subtype='FILE_PATH')
+    add_leaf_bones = bpy.props.BoolProperty(
+                    name="Add Leaf Bones",
+                    description="If enabled, adds leaf bones on export when batchconverting",
+                    default=False)
     outpath = bpy.props.StringProperty(
                     name="Output Path",
                     description="Where Processed rigs should be saved to",
                     maxlen = 256,
                     default = "",
                     subtype='FILE_PATH')
+    ignore_leaf_bones = bpy.props.BoolProperty(
+                    name="Ignore Leaf Bones",
+                    description="Ignore leaf bones on import",
+                    default=True)
+
     hipname = bpy.props.StringProperty(
                     name="Hip Name",
                     description="Additional Hipname to search for if not MixamoRig",
                     maxlen = 256,
                     default = "",
                     subtype='BYTE_STRING')
+    b_remove_namespace = bpy.props.BoolProperty(
+                    name="Remove Namespace",
+                    description="Removes Naespaces from objects and bones",
+                    default=True)
+    fixbind = bpy.props.BoolProperty(
+                    name="Fix Bind",
+                    description="If enabled, adds a dummy mesh and binds it, to prevent loss of bindpose when exporting fbx",
+                    default=True)
+    apply_rotation = bpy.props.BoolProperty(
+                    name="Apply Rotation",
+                    description="Applies rotation during conversion to prevent rotation and scaling issues",
+                    default=True)
+    apply_scale = bpy.props.BoolProperty(
+                    name="Apply Scale",
+                    description="Applies scale during conversion to prevent rotation and scaling issues",
+                    default=False)
+
+
+class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
+    '''Button/Operator for removing namespaces from selection'''
+    bl_idname = "mixamo.remove_namespace"
+    bl_label = "Remove Namespace"
+    description = "Removes all namespaces of selection"
+    
+    def execute(self, context):
+        mixamo = context.scene.mixamo
+        if bpy.context.object == None:
+            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
+            return{'CANCELLED'}
+        for obj in bpy.context.selected_objects:
+            status = mixamoconv.remove_namespace(obj)
+            if status == -1:
+                self.report({'ERROR_INVALID_INPUT'}, 'Invalid Object in selection')
+                return{'CANCELLED'}
+        return{'FINISHED'}
 
 class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -89,22 +156,57 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     description = "Bakes rootmotion for a single, already imported rig."
     
     def execute(self, context):
+        mixamo = context.scene.mixamo
         if bpy.context.object == None:
             self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
             return{'CANCELLED'}
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', bpy.context.scene.mixamo.hipname):
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
-        self.report({'INFO'}, "Rig Converted")
-        status = mixamoconv.HipToRoot(armature = bpy.context.object, use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
+        status = mixamoconv.hip_to_root(
+            armature = bpy.context.object,
+            use_x = mixamo.use_x,
+            use_y = mixamo.use_y,
+            use_z = mixamo.use_z,
+            on_ground = mixamo.on_ground,
+            scale = mixamo.scale,
+            restoffset = mixamo.restoffset,
+            hipname = mixamo.hipname,
+            fixbind = mixamo.fixbind,
+            apply_rotation = mixamo.apply_rotation,
+            apply_scale = mixamo.apply_scale)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
+        self.report({'INFO'}, "Rig Converted")
         return{'FINISHED'}
 
+class OBJECT_OT_ApplyRestoffset(bpy.types.Operator):
+    '''Button/Operator for converting single Rig'''
+    bl_idname = "mixamo.apply_restoffset"
+    bl_label = "Apply Restoffset"
+    description = "Applies Restoffset to restpose and corrects animation"
+    
+    def execute(self, context):
+        mixamo = context.scene.mixamo
+        if bpy.context.object == None:
+            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
+            return{'CANCELLED'}
+        if bpy.context.object.type != 'ARMATURE':
+            self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
+            return{'CANCELLED'}
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', mixamo.hipname):
+            self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
+            return{'CANCELLED'}
+        status = mixamoconv.apply_restoffset(bpy.context.object, bpy.context.object.data.bones[0], mixamo.restoffset)
+        if status == -1:
+            self.report({'ERROR_INVALID_INPUT'}, 'apply_restoffset Failed')
+            return{'CANCELLED'}
+        return{'FINISHED'}
+        
 class OBJECT_OT_ConvertBatch(bpy.types.Operator):
     '''Button/Operator for starting batch conversion'''
     bl_idname = "mixamo.convertbatch"
@@ -112,20 +214,37 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
     description = "Converts all mixamorigs from the [Input Path] and exports them to the [Ouput Path]"
     
     def execute(self, context):
-        inpath = bpy.context.scene.mixamo.inpath
-        outpath = bpy.context.scene.mixamo.outpath
+        mixamo = context.scene.mixamo
+        inpath = mixamo.inpath
+        outpath = mixamo.outpath
         if inpath == '':
             self.report({'ERROR_INVALID_INPUT'}, "Error: no Input Path set.")
             return{'CANCELLED'}
         if outpath == '':
             self.report({'ERROR_INVALID_INPUT'}, "Error: no Output Path set.")
             return{'CANCELLED'}
-        if (inpath == outpath) and not bpy.context.scene.mixamo.force_overwrite:
+        if (inpath == outpath) and not mixamo.force_overwrite:
             self.report({'ERROR_INVALID_INPUT'}, "Input and Output path are the same, source files would be overwritten.")
             return{'CANCELLED'}
-        if (inpath == outpath) & bpy.context.scene.mixamo.force_overwrite:
+        if (inpath == outpath) & mixamo.force_overwrite:
             self.report({'WARNING'}, "Input and Output path are the same, source files will be overwritten.")
-        numfiles = mixamoconv.BatchHipToRoot(bpy.path.abspath(inpath), bpy.path.abspath(outpath), use_x = context.scene.mixamo.use_x, use_y = context.scene.mixamo.use_y, use_z = context.scene.mixamo.use_vertical, on_ground = context.scene.mixamo.on_ground, scale = context.scene.mixamo.scale, hipname = bpy.context.scene.mixamo.hipname)
+        numfiles = mixamoconv.batch_hip_to_root(
+            bpy.path.abspath(inpath),
+            bpy.path.abspath(outpath),
+            use_x = mixamo.use_x,
+            use_y = mixamo.use_y,
+            use_z = mixamo.use_z,
+            on_ground = mixamo.on_ground,
+            scale = mixamo.scale,
+            restoffset = mixamo.restoffset,
+            hipname = mixamo.hipname,
+            fixbind = mixamo.fixbind,
+            apply_rotation = mixamo.apply_rotation,
+            apply_scale = mixamo.apply_scale,
+            b_remove_namespace = mixamo.b_remove_namespace,
+            add_leaf_bones = mixamo.add_leaf_bones,
+            knee_offset = mixamo.knee_offset,
+            ignore_leaf_bones = mixamo.ignore_leaf_bones)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{'CANCELLED'}
@@ -158,28 +277,66 @@ class MixamoconvPanel(bpy.types.Panel):
         box = layout.box()
         # Options for how to do the conversion
         row = box.row()
-        row.prop(scene.mixamo, "use_x")
-        row.prop(scene.mixamo, "use_y")
-        row = box.row()
-        row.prop(scene.mixamo, "use_vertical")
-        row.prop(scene.mixamo, "on_ground")
-        row = box.row()
-        row.prop(scene.mixamo, "hipname")
-        row = box.row()
-        row.prop(scene.mixamo, "scale")
+        row.prop(scene.mixamo, "use_z", toggle = True)
+        if scene.mixamo.use_z:
+            row.prop(scene.mixamo, "on_ground", toggle = True)
+        
         # Button for conversion of single Selected rig
         row = box.row()
         row.scale_y = 2.0
         row.operator("mixamo.convertsingle")
         
+        box = layout.box()
+        row = box.row()
+        row.prop(scene.mixamo, "advanced", toggle=True)
+        row = box.row()
+        #row.prop(scene.mixamo, "mode")
+        if scene.mixamo.advanced:
+            split = box.split()
+            col = split.column(align = True)
+            col.prop(scene.mixamo, "use_x", toggle = True)
+            col.prop(scene.mixamo, "use_y", toggle = True)
+            col.prop(scene.mixamo, "use_z", toggle = True)
+            row = box.row()
+            row.prop(scene.mixamo, "hipname")
+            row = box.row()
+            row.prop(scene.mixamo, 'b_remove_namespace', text="")
+            row.operator("mixamo.remove_namespace")
+            #row = box.row()
+            row.prop(scene.mixamo, "fixbind")
+            
+            row = box.row()
+            row.prop(scene.mixamo, "apply_rotation")
+            row.prop(scene.mixamo, "apply_scale")
+            row = box.row()
+            row.prop(scene.mixamo, "scale")
+            #box = box.box()
+            row = box.row()
+            row.prop(scene.mixamo, "experimental", toggle=True, icon='ERROR')
+            if scene.mixamo.experimental:
+                row = box.row()
+                split = box.split()
+                col = split.column()
+                col.prop(scene.mixamo, "restoffset")
+                #row = box.row()
+                col.operator("mixamo.apply_restoffset")
+                col = split.column()
+                col.prop(scene.mixamo, "knee_offset")
+                col.prop(scene.mixamo, "knee_bones")
         
         box = layout.box()
         # input and output paths for batch conversion
         box.label(text="Batch")
-        row = box.row()
-        row.prop(scene.mixamo, "inpath")
-        row = box.row()
-        row.prop(scene.mixamo, "outpath")
+        split = box.split()
+        col = split.column()
+        col.prop(scene.mixamo, "inpath")
+        
+        #row = box.row()
+        col.prop(scene.mixamo, "outpath")
+        if scene.mixamo.advanced:
+            col = split.column()
+            col.prop(scene.mixamo, "ignore_leaf_bones")
+            col.prop(scene.mixamo, "add_leaf_bones")
         row = box.row()
         box.prop(scene.mixamo, "force_overwrite")
         

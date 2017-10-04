@@ -22,15 +22,15 @@ or with the little plus sign on the left side of the 3D View
 In the Toolshelve there are several tabs on the left side,
 one of them should be named Mixamo
 
-### Options: [Use Vertical] [On Ground]
+### Options: [Use Z] [On Ground]
 it will behave as follows in Unreal Engine 4
 Only rotation along the Up Axis is transfered to the root
 ##### Both Enabled (recommended):
 A Root bone which stays on ground except for cases when the Hip moves higher than its restpose location
-##### Only [Use Vertical] Enabled:
+##### Only [Use Z] Enabled:
 the root bone can go below the Ground
 this will result in wierd behaviour if one Big Collider is used for the Character in Unreal
-##### [Use Vertical] is Disabled
+##### [Use Z] is Disabled
 no Vertical motion at all is transfered to the Root and [On Ground] becomes obsolete
 
 #### Options: [Use X] [Use Y]
@@ -40,9 +40,31 @@ Useful if one doesn't want to use root motion for some Animations but still need
 #### Option [Hip Name]
 Here you can specify a custom HipName if your Rig doesn't come from Mixamo. It will then also search for a bone with this name and consider it as Hip to bake From if found.
 
+#### Option [Remove Namespace]
+If enabled, removes all namespaces, leaving you with only the object/bone bare names.
+
+#### Option [Fix Bind]
+If your source files only contain a rig without a mesh, adds a dummy mesh and binds it to the armature. Otherwise the bindpose will not be saved properly.
+Useful if you download packs from mixamo, where all the animations don't have meshes, but only the rigs.
+
+#### Option [Apply Rotation]
+Makes sure, that there are no unneeded rotations on the character or its root bone, which would often cause unexpected rotation behaviour in unreal.
+
+#### Option [Apply Scale]
+Applies the scale of the character and its rig, so they have scale 1, but doesn't change the actual size of the character.
+
 #### Option [Scale]
-Scaling factor for unit conversion problems. Sometimes the scale of the root is keyed resulting in Scaling of Character if you apply the animation to your skeleton in Unreal.
-If set to something else than 1.0 it will remove existing scaling keys and scale the skeleton by this factor.
+Scaling factor for actually resizing your character.
+
+### Experimental Options
+
+#### Option [Restpose Offset]
+Offsets the restpose of your rig without offsetting the animation. Can be used to correct for an offset of the restpose that one might have accidentally added during animation editing or retargeting.
+
+#### Option [Knee Offset]
+Very kludgy workaround which can result in bones being out of place in animation.
+Can be used to fix rotational flickering occuring in some animations after export (seems to be an exporter bug). (mostly observed on legs but can be used on any bones)
+It moves the tip joint of given bones by the given vector in the restpose.
 
 ### Batch Conversion:
 * Here you can specify an Input- and Outputpath for Batchconversion

@@ -20,13 +20,61 @@
 '''
 
 import bpy
+from bpy_types import Object
 import os
 
-'''
-function to bake hipmotion to RootMotion in MixamoRigs
-'''
-def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, hipname=''):
 
+def remove_namespace(s = ''):
+    """function for removing all namespaces from strings, objects or even armatrure bones"""
+    
+    if type(s) == str:
+        i = s[::-1].find(':')
+        if i == -1:
+            return s
+        else:
+            return s[-i::]
+    elif type(s) == Object:
+        if s.type == 'ARMATURE':
+            for bone in s.data.bones:
+                bone.name = remove_namespace(bone.name)
+        s.name = remove_namespace(s.name)
+        return 1
+    return -1
+
+
+def apply_restoffset(armature, hipbone, restoffset):
+    """function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet"""
+    # apply rest offset to restpose
+    bpy.context.scene.objects.active = armature
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.armature.select_all(action='SELECT')
+    bpy.ops.transform.translate(value=restoffset, constraint_axis=(False, False, False), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size=1)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # apply restoffset to animation of hip
+    restoffset_local = (restoffset[0], restoffset[2], -restoffset[1])
+    for axis in range(3):
+        fcurve = armature.animation_data.action.fcurves.find("pose.bones[\""+hipbone.name+"\"].location", axis)
+        for pi in range(len(fcurve.keyframe_points)):
+            fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/armature.scale.x
+    return 1
+
+
+def apply_kneefix(armature, offset, bonenames = ['RightUpLeg', 'LeftUpLeg']):
+    """workaround for flickering knees after export (moves joints in restpose by offset, can break animation)"""
+    bpy.context.scene.objects.active = armature
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.armature.select_all(action='DESELECT')
+    for name in bonenames:
+        armature.data.edit_bones[name].select_tail = True
+    bpy.ops.transform.translate(value=offset, proportional='DISABLED', release_confirm=True)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    return 1
+
+
+def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_rotation = True, apply_scale = False):
+    """function to bake hipmotion to RootMotion in MixamoRigs"""
+    
     root = armature
     root.name = "root"
     framerange = root.animation_data.action.frame_range
@@ -37,7 +85,6 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
             break
     if hips == None:
         return -1
-    z_offset = hips.bone.head.y * root.scale.y
     
     #Scale by ScaleFactor
     if scale != 1.0:
@@ -46,6 +93,12 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
             if fcurve != None:
                 root.animation_data.action.fcurves.remove(fcurve)
         root.scale *= scale
+    
+    #apply restoffset to restpose and correct animation
+    apply_restoffset(root, hips, restoffset)
+    
+    hiplocation_world = root.matrix_local * hips.bone.head
+    z_offset = hiplocation_world[2]
     
     #Create helper to bake the root motion
     bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
@@ -98,10 +151,14 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True, clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
 
-    #Bake Root motion to Armature (root)
+    #select armature
     root.select = True
     bpy.context.scene.objects.active = root
-
+    
+    if apply_rotation or apply_scale:
+        bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
+    
+    #Bake Root motion to Armature (root)
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].target = rootBaker
 
@@ -133,14 +190,37 @@ def HipToRoot(armature, use_x = True, use_y = True, use_z = True, on_ground = Tr
     rootBaker.select = True
 
     bpy.ops.object.delete(use_global=False)
-    return 1
     
-#End of HipToRoot Function
+    # bind armature to dummy mesh if it doesn't have any
+    if fixbind:
+        bindmesh = None
+        for child in root.children:
+            for mod in child.modifiers:
+                if mod.type == 'ARMATURE':
+                    if mod.object == root:
+                        bindmesh = child
+                        break
+        if bindmesh == None:
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.mesh.primitive_plane_add(radius=1, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+            binddummy = bpy.context.object
+            binddummy.name = 'binddummy'
+            root.select = True
+            bpy.context.scene.objects.active = root
+            bpy.ops.object.parent_set(type='ARMATURE')
+        elif apply_rotation or apply_scale:
+            bindmesh.select = True
+            bpy.context.scene.objects.active = bindmesh
+            bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
+    
+    return 1
 
-'''
-Batch Convert MixamoRigs
-'''
-def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, hipname = ''):
+def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_rotation = True, apply_scale = False, b_remove_namespace = True, add_leaf_bones = False, knee_offset = (0,0,0), ignore_leaf_bones = True):
+    """Batch Convert MixamoRigs"""
+    
+    bpy.context.scene.unit_settings.system = 'METRIC'
+    bpy.context.scene.unit_settings.scale_length = 0.01
+
     numfiles = 0
     for file in os.scandir(source_dir):
         if file.name[-4::] == ".fbx":
@@ -154,22 +234,32 @@ def BatchHipToRoot(source_dir, dest_dir, use_x = True, use_y = True, use_z = Tru
                 bpy.data.materials.remove(material, do_unlink=True)
             for action in bpy.data.actions:
                     bpy.data.actions.remove(action, do_unlink=True)
-            #imprt FBX
-            bpy.ops.import_scene.fbx(filepath=file.path, axis_forward='-Z', axis_up='Y', directory="", filter_glob="*.fbx", ui_tab='MAIN', use_manual_orientation=False, global_scale=1, bake_space_transform=False, use_custom_normals=True, use_image_search=True, use_alpha_decals=False, decal_offset=0, use_anim=True, anim_offset=1, use_custom_props=True, use_custom_props_enum_as_string=True, ignore_leaf_bones=True, force_connect_children=False, automatic_bone_orientation=False, primary_bone_axis='Y', secondary_bone_axis='X', use_prepost_rot=True)
+            #import FBX
+            bpy.ops.import_scene.fbx(filepath=file.path, axis_forward='-Z', axis_up='Y', directory="", filter_glob="*.fbx", ui_tab='MAIN', use_manual_orientation=False, global_scale=1, bake_space_transform=False, use_custom_normals=True, use_image_search=True, use_alpha_decals=False, decal_offset=0, use_anim=True, anim_offset=1, use_custom_props=True, use_custom_props_enum_as_string=True, ignore_leaf_bones=ignore_leaf_bones, force_connect_children=False, automatic_bone_orientation=False, primary_bone_axis='Y', secondary_bone_axis='X', use_prepost_rot=True)
+            #namespace removal
+            if b_remove_namespace:
+                for obj in bpy.context.selected_objects:
+                    remove_namespace(obj)
+            
             def getArmature(objects):
                 for a in objects:
                     if a.type == 'ARMATURE':
                         return a
             armature = getArmature(bpy.context.selected_objects)
             #do hip to Root conversion
-            if HipToRoot(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, hipname = hipname) == -1:
+            if hip_to_root(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_rotation = apply_rotation, apply_scale = apply_scale) == -1:
                 return -1
+            apply_kneefix(armature, knee_offset, bonenames = bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
             #remove newly created orphan actions
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:
                     bpy.data.actions.remove(action, do_unlink=True)
 
-            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name, use_selection=False)
+            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name,
+                version = 'BIN7400',
+                use_selection=False,
+                apply_unit_scale=False,
+                add_leaf_bones=add_leaf_bones)
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
             print("%d files converted" % numfiles)
