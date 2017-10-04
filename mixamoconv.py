@@ -23,8 +23,10 @@ import bpy
 from bpy_types import Object
 import os
 
-#function for removing all namespaces from strings, objects or even armatrure bones
+
 def remove_namespace(s = ''):
+    """function for removing all namespaces from strings, objects or even armatrure bones"""
+    
     if type(s) == str:
         i = s[::-1].find(':')
         if i == -1:
@@ -39,8 +41,9 @@ def remove_namespace(s = ''):
         return 1
     return -1
 
-#function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet
+
 def apply_restoffset(armature, hipbone, restoffset):
+    """function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet"""
     # apply rest offset to restpose
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
@@ -56,8 +59,9 @@ def apply_restoffset(armature, hipbone, restoffset):
             fcurve.keyframe_points[pi].co.y -= restoffset_local[axis]/armature.scale.x
     return 1
 
-#workaround for flickering knees after export (moves joints in restpose by offset, can break animation)
+
 def apply_kneefix(armature, offset, bonenames = ['RightUpLeg', 'LeftUpLeg']):
+    """workaround for flickering knees after export (moves joints in restpose by offset, can break animation)"""
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.armature.select_all(action='DESELECT')
@@ -67,11 +71,10 @@ def apply_kneefix(armature, offset, bonenames = ['RightUpLeg', 'LeftUpLeg']):
     bpy.ops.object.mode_set(mode='OBJECT')
     return 1
 
-'''
-function to bake hipmotion to RootMotion in MixamoRigs
-'''
-def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_rotation = True, apply_scale = False):
 
+def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname='', fixbind = True, apply_rotation = True, apply_scale = False):
+    """function to bake hipmotion to RootMotion in MixamoRigs"""
+    
     root = armature
     root.name = "root"
     framerange = root.animation_data.action.frame_range
@@ -82,7 +85,6 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
             break
     if hips == None:
         return -1
-    
     
     #Scale by ScaleFactor
     if scale != 1.0:
@@ -212,13 +214,10 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
             bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
     
     return 1
-    
-#End of hip_to_root Function
 
-'''
-Batch Convert MixamoRigs
-'''
 def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = True, on_ground = True, scale = 1.0, restoffset = (0,0,0), hipname = '', fixbind = True, apply_rotation = True, apply_scale = False, b_remove_namespace = True, add_leaf_bones = False, knee_offset = (0,0,0), ignore_leaf_bones = True):
+    """Batch Convert MixamoRigs"""
+    
     bpy.context.scene.unit_settings.system = 'METRIC'
     bpy.context.scene.unit_settings.scale_length = 0.01
 
@@ -250,7 +249,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
             #do hip to Root conversion
             if hip_to_root(armature, use_x = use_x, use_y = use_y, use_z = use_z, on_ground = on_ground, scale = scale, restoffset = restoffset, hipname = hipname, fixbind = fixbind, apply_rotation = apply_rotation, apply_scale = apply_scale) == -1:
                 return -1
-            apply_kneefix(armature, knee_offset, bonenames = mixamo.knee_bones.split(','))
+            apply_kneefix(armature, knee_offset, bonenames = bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
             #remove newly created orphan actions
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:

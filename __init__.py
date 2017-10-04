@@ -46,15 +46,6 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
                     description="Experimental Options (use with caution, dirty workarounds)",
                     default=False)
     
-    '''
-    mode = bpy.props.EnumProperty(
-                    items = [
-                        ('SIMPLE', 'Simple', 'Simple Mode'),
-                        ('ADVANCED' 'Advanced', 'Advanced Mode'),
-                        ('EXPERIMENTAL', 'Experimental', 'Experimental Mode')
-                    ],
-                    name="Mode")
-    '''
     use_x = bpy.props.BoolProperty(
                     name="Use X",
                     description="If enabled, Horizontal motion is transfered to RootBone",
