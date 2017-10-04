@@ -219,7 +219,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
     """Batch Convert MixamoRigs"""
     
     bpy.context.scene.unit_settings.system = 'METRIC'
-    bpy.context.scene.unit_settings.scale_length = 0.01
+    bpy.context.scene.unit_settings.scale_length = 1
 
     numfiles = 0
     for file in os.scandir(source_dir):
