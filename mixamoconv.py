@@ -22,17 +22,18 @@
 import bpy
 from bpy_types import Object
 import os
-
+import re
 
 def remove_namespace(s = ''):
     """function for removing all namespaces from strings, objects or even armatrure bones"""
     
     if type(s) == str:
-        i = s[::-1].find(':')
-        if i == -1:
-            return s
+        i = re.search(r"[:_]", s[::-1])
+        if i:
+            return s[-(i.start())::]
         else:
-            return s[-i::]
+            return s
+
     elif type(s) == Object:
         if s.type == 'ARMATURE':
             for bone in s.data.bones:
@@ -79,7 +80,7 @@ def hip_to_root(armature, use_x = True, use_y = True, use_z = True, on_ground = 
     root.name = "root"
     framerange = root.animation_data.action.frame_range
     
-    for hipname in ('Hips', 'mixamorig:Hips', hipname):
+    for hipname in ('Hips', 'mixamorig:Hips', 'mixamorig_Hips', hipname):
         hips = root.pose.bones.get(hipname)
         if hips != None:
             break
