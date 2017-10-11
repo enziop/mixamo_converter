@@ -22,7 +22,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 3),
+    "version": (1, 0, 4),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -163,7 +163,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', mixamo.hipname):
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'mixamorig_Hips', 'Hips', mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
         status = mixamoconv.hip_to_root(
@@ -198,7 +198,7 @@ class OBJECT_OT_ApplyRestoffset(bpy.types.Operator):
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'Hips', mixamo.hipname):
+        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'mixamorig_Hips', 'Hips', mixamo.hipname):
             self.report({'ERROR_INVALID_INPUT'}, "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{'CANCELLED'}
         status = mixamoconv.apply_restoffset(bpy.context.object, bpy.context.object.data.bones[0], mixamo.restoffset)
