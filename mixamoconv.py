@@ -224,10 +224,43 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
 
     numfiles = 0
     for file in os.scandir(source_dir):
-        if file.name[-4::] == ".fbx":
+        file_ext = file.name[-4::]
+        file_loader = {
+            ".fbx": lambda filename: bpy.ops.import_scene.fbx(filepath=filename, axis_forward='-Z',
+                                                              axis_up='Y', directory="",
+                                                              filter_glob="*.fbx", ui_tab='MAIN',
+                                                              use_manual_orientation=False, global_scale=1,
+                                                              bake_space_transform=False,
+                                                              use_custom_normals=True,
+                                                              use_image_search=True,
+                                                              use_alpha_decals=False, decal_offset=0,
+                                                              use_anim=True, anim_offset=1,
+                                                              use_custom_props=True,
+                                                              use_custom_props_enum_as_string=True,
+                                                              ignore_leaf_bones=ignore_leaf_bones,
+                                                              force_connect_children=False,
+                                                              automatic_bone_orientation=False,
+                                                              primary_bone_axis='Y',
+                                                              secondary_bone_axis='X',
+                                                              use_prepost_rot=True),
+            ".dae": lambda filename: bpy.ops.wm.collada_import(filepath=filename, filter_blender=False,
+                                                               filter_backup=False, filter_image=False,
+                                                               filter_movie=False, filter_python=False,
+                                                               filter_font=False, filter_sound=False,
+                                                               filter_text=False, filter_btx=False,
+                                                               filter_collada=True, filter_alembic=False,
+                                                               filter_folder=True, filter_blenlib=False,
+                                                               filemode=8, display_type='DEFAULT',
+                                                               sort_method='FILE_SORT_ALPHA',
+                                                               import_units=False, fix_orientation=True,
+                                                               find_chains=True, auto_connect=True,
+                                                               min_chain_length=0)
+        }
+        if file_ext in file_loader:
             numfiles += 1
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=True)
+
             #remove all datablocks
             for mesh in bpy.data.meshes:
                 bpy.data.meshes.remove(mesh, do_unlink=True)
@@ -235,8 +268,10 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
                 bpy.data.materials.remove(material, do_unlink=True)
             for action in bpy.data.actions:
                     bpy.data.actions.remove(action, do_unlink=True)
+
             #import FBX
-            bpy.ops.import_scene.fbx(filepath=file.path, axis_forward='-Z', axis_up='Y', directory="", filter_glob="*.fbx", ui_tab='MAIN', use_manual_orientation=False, global_scale=1, bake_space_transform=False, use_custom_normals=True, use_image_search=True, use_alpha_decals=False, decal_offset=0, use_anim=True, anim_offset=1, use_custom_props=True, use_custom_props_enum_as_string=True, ignore_leaf_bones=ignore_leaf_bones, force_connect_children=False, automatic_bone_orientation=False, primary_bone_axis='Y', secondary_bone_axis='X', use_prepost_rot=True)
+            file_loader[file_ext](file.path)
+
             #namespace removal
             if b_remove_namespace:
                 for obj in bpy.context.selected_objects:
@@ -256,14 +291,15 @@ def batch_hip_to_root(source_dir, dest_dir, use_x = True, use_y = True, use_z = 
                 if action != armature.animation_data.action:
                     bpy.data.actions.remove(action, do_unlink=True)
 
-            bpy.ops.export_scene.fbx(filepath=dest_dir + file.name,
+            # store file to disk
+            output_file = dest_dir + file.name[:-3] + ".fbx"
+            bpy.ops.export_scene.fbx(filepath=output_file,
                 version = 'BIN7400',
                 use_selection=False,
                 apply_unit_scale=False,
                 add_leaf_bones=add_leaf_bones)
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
-            print("%d files converted" % numfiles)
     return numfiles
 
 if __name__ == "__main__":
