@@ -53,6 +53,20 @@ This option is not compatible with "Remove Namespace" option.
 To convert the bones of the armature in the scene select the armature and press the play button.
 Check this option to enable it for batch conversions.
 
+Note: When importing the mixamo skeleton to unreal, you still need to perform a retarget.
+For a fast retargeting, after importing the converted FBX of your mixamo character in T pose, open its skeleton and retarget it to the humanoid rig but
+DO NOT PRESS the 'automapping' button for mixamo skeletons. If it's pressed, the automapping will match the mixamo bones to wrong rig nodes.
+
+Please note that, most of the bones in the mixamo skeleton have a 1:1 mapping to Humanoid rig nodes, but for the following ones:
+UpperArm_L -> upperarm_twist_01_l
+Hand_L -> lowerarm_twist_01_l
+UpperArm_R -> upperarm_twist_01_r
+Hand_R -> lowerarm_twist_01_r
+thigh_l -> thigh_twist_01_l
+For more info please check the [unreal documentation](https://docs.unrealengine.com/latest/INT/Engine/Animation/RetargetingDifferentSkeletons/)
+Moreover to retarget your mixamo skeleton (in T pose) to the unreal one (A pose), both have to share the same retarget pose.'
+You can easily set T pose to the unreal skeleton following the instructions in this [video](https://www.youtube.com/watch?v=D8nH2Yo9PT8)
+
 #### Option [Fix Bind]
 If your source files only contain a rig without a mesh, adds a dummy mesh and binds it to the armature. Otherwise the bindpose will not be saved properly.
 Useful if you download packs from mixamo, where all the animations don't have meshes, but only the rigs.
