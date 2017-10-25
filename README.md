@@ -3,8 +3,9 @@ is a Blender Plugin that Converts Mixamo animations to work in Unreal Engine 4 w
 Blender 2.78 or newer needed to work
 
 ### It can
-* convert single animations if they are previously imported by the user
-* Batch convert all FBX files from a folder to a new location
+* convert single animations (FBX or Collada) if they are previously imported by the user
+* Batch convert all input FBX and Collada files from a folder to a new location
+* Renames the bones in the skeleton to match the maniquine unreal skeleton
 
 ## Installation
 * first you have to get blender from https://www.blender.org/download/
@@ -42,6 +43,15 @@ Here you can specify a custom HipName if your Rig doesn't come from Mixamo. It w
 
 #### Option [Remove Namespace]
 If enabled, removes all namespaces, leaving you with only the object/bone bare names.
+This option is not compatible with "Use Unreal Engine bone names" option.
+To convert the bones of the armature in the scene select the armature and press the play button.
+Check this option to enable it for batch conversions.
+
+#### Option [Use Unreal Engine bone names]
+If enabled, renames all bones in the armature to match the unreal engine maniquine skeleton. If a bone doesn't match a warning is printed and the name becomes the original one but without the 'mixamo' namespace (as Remove Namespace does).
+This option is not compatible with "Remove Namespace" option.
+To convert the bones of the armature in the scene select the armature and press the play button.
+Check this option to enable it for batch conversions.
 
 #### Option [Fix Bind]
 If your source files only contain a rig without a mesh, adds a dummy mesh and binds it to the armature. Otherwise the bindpose will not be saved properly.
