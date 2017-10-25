@@ -148,6 +148,9 @@ def apply_restoffset(armature, hipbone, restoffset):
 
 def apply_kneefix(armature, offset, bonenames=['RightUpLeg', 'LeftUpLeg']):
     """workaround for flickering knees after export (moves joints in restpose by offset, can break animation)"""
+    if bpy.context.scene.mixamo.b_unreal_bones:
+        bonenames = ["thigh_twist_01_r", "thigh_twist_01_l"]
+
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.armature.select_all(action='DESELECT')
@@ -166,11 +169,12 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     root.name = "root"
     framerange = root.animation_data.action.frame_range
 
-    for hipname in ('Hips', 'mixamorig:Hips', 'mixamorig_Hips', hipname):
+    for hipname in ('Hips', 'mixamorig:Hips', 'mixamorig_Hips', 'Pelvis', hipname):
         hips = root.pose.bones.get(hipname)
         if hips != None:
             break
     if hips == None:
+        log.warning('WARNING I have not found any hip bone for %s and the conversion is stopping here',  root.pose.bones)
         return -1
 
     # Scale by ScaleFactor
@@ -313,7 +317,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
 
 def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, on_ground=True, scale=1.0,
                       restoffset=(0, 0, 0), hipname='', fixbind=True, apply_rotation=True, apply_scale=False,
-                      b_remove_namespace=True, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True):
+                      b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True):
     """Batch Convert MixamoRigs"""
 
     bpy.context.scene.unit_settings.system = 'METRIC'
@@ -373,6 +377,10 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             if b_remove_namespace:
                 for obj in bpy.context.selected_objects:
                     remove_namespace(obj)
+            # namespace removal
+            elif b_unreal_bones:
+                for obj in bpy.context.selected_objects:
+                    rename_bones(obj, 'unreal')
 
             def getArmature(objects):
                 for a in objects:
@@ -380,13 +388,16 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                         return a
 
             armature = getArmature(bpy.context.selected_objects)
+
             # do hip to Root conversion
             if hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, scale=scale,
                            restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
                            apply_scale=apply_scale) == -1:
                 return -1
+
             apply_kneefix(armature, knee_offset,
                           bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
+
             # remove newly created orphan actions
             for action in bpy.data.actions:
                 if action != armature.animation_data.action:

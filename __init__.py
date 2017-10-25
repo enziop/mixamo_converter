@@ -269,6 +269,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             apply_rotation =mixamo.apply_rotation,
             apply_scale =mixamo.apply_scale,
             b_remove_namespace =mixamo.b_remove_namespace,
+            b_unreal_bones =mixamo.b_unreal_bones,
             add_leaf_bones =mixamo.add_leaf_bones,
             knee_offset =mixamo.knee_offset,
             ignore_leaf_bones =mixamo.ignore_leaf_bones)
@@ -349,22 +350,23 @@ class MixamoconvPanel(bpy.types.Panel):
             if scene.mixamo.apply_scale:
                 row.prop(scene.mixamo, "scale")
 
-            # box = box.box()
             row = box.row()
             row.prop(scene.mixamo, "experimental", toggle=True, icon='ERROR')
             if scene.mixamo.experimental:
-                row = box.row()
                 split = box.split()
                 col = split.column()
                 col.prop(scene.mixamo, "restoffset")
-                # row = box.row()
+
                 col.operator("mixamo.apply_restoffset")
                 col = split.column()
                 col.prop(scene.mixamo, "knee_offset")
-                col.prop(scene.mixamo, "knee_bones")
 
-        box = layout.box()
+                row = col.row()
+                row.prop(scene.mixamo, "knee_bones")
+                row.enabled = not scene.mixamo.b_remove_namespace and not scene.mixamo.b_unreal_bones
+
         # input and output paths for batch conversion
+        box = layout.box()
         box.label(text="Batch")
         split = box.split()
         col = split.column()
