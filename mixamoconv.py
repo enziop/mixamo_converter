@@ -86,8 +86,6 @@ def rename_bones(s='', t='unreal'):
         'LeftHandThumb1': 'thumb_01_l',
         'LeftHandThumb2': 'thumb_02_l',
         'LeftHandThumb3': 'thumb_03_l',
-        'LeftHand': 'lowerarm_twist_01_l',
-        'LeftArm': 'upperarm_twist_01_l',
         'RightHandIndex1': 'index_01_r',
         'RightHandIndex2': 'index_02_r',
         'RightHandIndex3': 'index_03_r',
@@ -103,12 +101,8 @@ def rename_bones(s='', t='unreal'):
         'RightHandThumb1': 'thumb_01_r',
         'RightHandThumb2': 'thumb_02_r',
         'RightHandThumb3': 'thumb_03_r',
-        'RightHand': 'lowerarm_twist_01_r',
-        'RightArm': 'upperarm_twist_01_r',
         'LeftToeBase': 'ball_l',
-        'LeftUpLeg': 'thigh_twist_01_l',
-        'RightToeBase': 'ball_r',
-        'RightUpLeg': 'thigh_twist_01_r'
+        'RightToeBase': 'ball_r'
     }
     schema = {'unreal': unreal }
     if type(s) == str:
@@ -149,7 +143,7 @@ def apply_restoffset(armature, hipbone, restoffset):
 def apply_kneefix(armature, offset, bonenames=['RightUpLeg', 'LeftUpLeg']):
     """workaround for flickering knees after export (moves joints in restpose by offset, can break animation)"""
     if bpy.context.scene.mixamo.b_unreal_bones:
-        bonenames = ["thigh_twist_01_r", "thigh_twist_01_l"]
+        bonenames = ["thigh_r", "thigh_l"]
 
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
@@ -409,7 +403,10 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                                      version='BIN7400',
                                      use_selection=False,
                                      apply_unit_scale=False,
-                                     add_leaf_bones=add_leaf_bones)
+                                     add_leaf_bones=add_leaf_bones,
+                                     axis_forward='-Z',
+                                     axis_up='Y',
+                                     mesh_smooth_type='FACE')
             bpy.ops.object.select_all(action='SELECT')
             bpy.ops.object.delete(use_global=False)
     return numfiles
