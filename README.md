@@ -110,10 +110,13 @@ Batch Convert will delete everything from your currently open blenderscene
 so only use it in a newly startet instance of blender or an empty scene
 
 ### Video Tutorials
-Do you see this plugin in action, please have a look at the tutorials below
 
 #### Importing a mixamo character into unreal with and retarget animations
-This video starts showing how to install the mixamoconv plugin into blender.
-Then it shows how to quickly batch convert a series of mixamo characters (same procedure for anims), import them to unreal, reterget the mixamo skeleton and retarget some maniquine anims to the mixamo skeleton. 
+The video starts showing how to install the mixamoconv plugin into blender.
+Then it describe how to quickly batch convert a mixamo character (same procedure for anims), import it to unreal, reterget the mixamo skeleton and retarget some maniquine anims to the mixamo skeleton. 
+
+
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/z97w4vrm8Eo/0.jpg)](https://www.youtube.com/watch?v=z97w4vrm8Eo)    
+
+
 Happy Converting
