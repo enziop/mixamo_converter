@@ -59,17 +59,14 @@ DO NOT PRESS the 'automapping' button for mixamo skeletons. If it's pressed, the
 
 Please note that, most of the bones in the mixamo skeleton have a 1:1 mapping to Humanoid rig nodes, but for the following ones:
 
-lowerarm_twist_01_l -> hand_l
-upperarm_twist_01_l -> upperarm_l
-
-lowerarm_twist_01_r -> hand_r
-upperarm_twist_01_r -> upperarm_r
-
-thigh_twist_01_l -> thigh_l
-calf_twist01_l ->  None
-
-thigh_twist_01_r -> thigh_r
-calf_twist01_r -> None
+* lowerarm_twist_01_l -> hand_l
+* upperarm_twist_01_l -> upperarm_l
+* lowerarm_twist_01_r -> hand_r
+* upperarm_twist_01_r -> upperarm_r
+* thigh_twist_01_l -> thigh_l
+* calf_twist01_l ->  None
+* thigh_twist_01_r -> thigh_r
+* calf_twist01_r -> None
 
 For more info please check the [unreal documentation](https://docs.unrealengine.com/latest/INT/Engine/Animation/RetargetingDifferentSkeletons/)
 
