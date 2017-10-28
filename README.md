@@ -58,6 +58,7 @@ For a fast retargeting, after importing the converted FBX of your mixamo charact
 DO NOT PRESS the 'automapping' button for mixamo skeletons. If it's pressed, the automapping will match the mixamo bones to wrong rig nodes.
 
 Please note that, most of the bones in the mixamo skeleton have a 1:1 mapping to Humanoid rig nodes, but for the following ones:
+
 lowerarm_twist_01_l -> hand_l
 upperarm_twist_01_l -> upperarm_l
 
@@ -71,6 +72,7 @@ thigh_twist_01_r -> thigh_r
 calf_twist01_r -> None
 
 For more info please check the [unreal documentation](https://docs.unrealengine.com/latest/INT/Engine/Animation/RetargetingDifferentSkeletons/)
+
 Moreover to retarget your mixamo skeleton (in T pose) to the unreal one (A pose), both have to share the same retarget pose.'
 You can easily set T pose to the unreal skeleton following the instructions in this [video](https://www.youtube.com/watch?v=D8nH2Yo9PT8)
 
