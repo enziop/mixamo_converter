@@ -143,7 +143,7 @@ def apply_restoffset(armature, hipbone, restoffset):
 def apply_kneefix(armature, offset, bonenames=['RightUpLeg', 'LeftUpLeg']):
     """workaround for flickering knees after export (moves joints in restpose by offset, can break animation)"""
     if bpy.context.scene.mixamo.b_unreal_bones:
-        bonenames = ["thigh_r", "thigh_l"]
+        bonenames = ["calf_r", "calf_l"]
 
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
@@ -389,8 +389,10 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                            apply_scale=apply_scale) == -1:
                 return -1
 
-            apply_kneefix(armature, knee_offset,
-                          bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
+
+            if (knee_offset != (0.0, 0.0, 0.0)):
+                apply_kneefix(armature, knee_offset,
+                              bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
 
             # remove newly created orphan actions
             for action in bpy.data.actions:
