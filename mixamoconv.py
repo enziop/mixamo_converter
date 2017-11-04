@@ -400,7 +400,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                     bpy.data.actions.remove(action, do_unlink=True)
 
             # store file to disk
-            output_file = dest_dir + file.name[:-3] + ".fbx"
+            output_file = dest_dir + file.name[:-4] + ".fbx"
             bpy.ops.export_scene.fbx(filepath=output_file,
                                      version='BIN7400',
                                      use_selection=False,
