@@ -215,12 +215,6 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     bpy.context.object.constraints["Copy Location"].target = root
     bpy.context.object.constraints["Copy Location"].subtarget = hips.name
 
-    bpy.ops.object.constraint_add(type='COPY_ROTATION')
-    bpy.context.object.constraints["Copy Rotation"].target = root
-    bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
-    bpy.context.object.constraints["Copy Rotation"].use_y = False
-    bpy.context.object.constraints["Copy Rotation"].use_x = False
-
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
 
@@ -252,10 +246,6 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     # Bake Root motion to Armature (root)
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].target = rootBaker
-
-    bpy.ops.object.constraint_add(type='COPY_ROTATION')
-    bpy.context.object.constraints["Copy Rotation"].target = bpy.data.objects["rootBaker"]
-    bpy.context.object.constraints["Copy Rotation"].use_offset = True
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
