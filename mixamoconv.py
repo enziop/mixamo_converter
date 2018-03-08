@@ -21,6 +21,7 @@
 
 import bpy
 from bpy_types import Object
+from math import copysign
 import os
 import re
 import logging
@@ -154,13 +155,39 @@ def apply_kneefix(armature, offset, bonenames=['RightUpLeg', 'LeftUpLeg']):
     bpy.ops.object.mode_set(mode='OBJECT')
     return 1
 
+def get_all_quaternion_curves(object):
+    """returns all quaternion fcurves of object/bones packed together in a touple per object/bone"""
+    fcurves = object.animation_data.action.fcurves
+    if fcurves.find('rotation_quaternion'):
+        yield (fcurves.find('rotation_quaternion', 0), fcurves.find('rotation_quaternion', 1), fcurves.find('rotation_quaternion', 2), fcurves.find('rotation_quaternion', 3))
+    for bone in object.pose.bones:
+        data_path = 'pose.bones["' + bone.name + '"].rotation_quaternion'
+        if fcurves.find(data_path):
+            yield (fcurves.find(data_path, 0), fcurves.find(data_path, 1),fcurves.find(data_path, 2),fcurves.find(data_path, 3))
+
+def quaternion_cleanup(object):
+    """fixes signs in quaternion fcurves swapping from one frame to another"""
+    for curves in get_all_quaternion_curves(object):
+        zipped = list(zip(
+            curves[0].keyframe_points,
+            curves[1].keyframe_points,
+            curves[2].keyframe_points,
+            curves[3].keyframe_points))
+        for i in range(1, len(zipped)):
+            change_amount = 0.0
+            for j in range(4):
+                change_amount += abs(zipped[i-1][j].co.y - zipped[i][j].co.y)
+            if change_amount > 1.0:
+                for j in range(4):
+                    zipped[i][j].co.y *= -1.0
 
 def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, scale=1.0, restoffset=(0, 0, 0),
                 hipname='', fixbind=True, apply_rotation=True, apply_scale=False):
     """function to bake hipmotion to RootMotion in MixamoRigs"""
-
+    
     root = armature
     root.name = "root"
+    root.rotation_mode = 'QUATERNION'
     framerange = root.animation_data.action.frame_range
 
     for hipname in ('Hips', 'mixamorig:Hips', 'mixamorig_Hips', 'Pelvis', hipname):
@@ -179,6 +206,9 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
                 root.animation_data.action.fcurves.remove(fcurve)
         root.scale *= scale
 
+    # fix quaternion sign swapping
+    quaternion_cleanup(root)
+
     # apply restoffset to restpose and correct animation
     apply_restoffset(root, hips, restoffset)
 
@@ -191,6 +221,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     False, False, False, False))
     rootBaker = bpy.context.object
     rootBaker.name = "rootBaker"
+    rootBaker.rotation_mode = 'QUATERNION'
 
     if use_z:
         print("using z")
@@ -230,6 +261,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     False, False, False, False))
     hipsBaker = bpy.context.object
     hipsBaker.name = "hipsBaker"
+    hipsBaker.rotation_mode = 'QUATERNION'
 
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
     bpy.context.object.constraints["Copy Location"].target = root
@@ -271,6 +303,8 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'POSE'})
+
+    quaternion_cleanup(root)
 
     # Delete helpers
     bpy.ops.object.mode_set(mode='OBJECT')
