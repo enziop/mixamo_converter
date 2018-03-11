@@ -119,4 +119,26 @@ Then it describe how to quickly batch convert a mixamo character (same procedure
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/z97w4vrm8Eo/0.jpg)](https://www.youtube.com/watch?v=z97w4vrm8Eo)    
 
 
+#### Development
+If you wanna contribute to this project you can edit the project with PyCharm and run the changes straightway in Blender.
+To achieve this you have to:
++  Download Pycharm community edition from [jetbrains.com](https://www.jetbrains.com/pycharm/download)
++  Open blender
++  open a text view, click + and paste there the code below 
++  Replace /the/path/to/the/git/project with the path to github project in the below code
++  Edit the changes in Pycharm
++  Click "Run Script" in blender to reload the project with the new changes
+
+'''
+import bpy
+import os
+import sys
+
+git_path=r'/the/path/to/the/git/project'
+sys.path.insert(0, git_path)
+filename = os.path.join(git_path, '__init__.py')
+
+exec(compile(open(filename).read(), filename, 'exec'))
+'''
+
 Happy Converting
