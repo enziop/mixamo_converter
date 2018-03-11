@@ -251,7 +251,6 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
     bpy.context.object.constraints["Copy Rotation"].use_y = False
     bpy.context.object.constraints["Copy Rotation"].use_x = False
-    bpy.context.object.constraints["Copy Rotation"].use_z = False
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
