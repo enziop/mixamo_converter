@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
+    Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
     Copyright (C) 2017  Enzio Probst
 
     Created by Enzio Probst
@@ -33,7 +34,16 @@ bl_info = {
 }
 
 import bpy
-from . import mixamoconv
+
+try:
+    from . import mixamoconv
+except SystemError:
+    import mixamoconv
+
+if "bpy" in locals():
+    from importlib import reload
+    if "mixamoconv" in locals():
+        reload(mixamoconv)
 
 class MixamoPropertyGroup(bpy.types.PropertyGroup):
     '''Property container for options and paths of mixamo Converter'''
@@ -180,7 +190,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     def execute(self, context):
         mixamo = context.scene.mixamo
         if bpy.context.object == None:
-            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected.")
+            self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected. Please select the Armature object.")
             return{ 'CANCELLED'}
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
