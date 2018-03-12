@@ -2,7 +2,7 @@
 
 '''
     Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
-    Copyright (C) 2017  Enzio Probst
+    Copyright (C) 2017-2018  Enzio Probst
 
     Created by Enzio Probst
 
@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 0, 9),
+    "version": (1, 1, 0),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -71,6 +71,11 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     on_ground = bpy.props.BoolProperty(
         name="On Ground",
         description="If enabled, root bone is on ground and only moves up at jumps",
+        default=True)
+
+    use_rotation = bpy.props.BoolProperty(
+        name="Transfer Rotation",
+        description="Whether to transfer roation to root motion. Should be enabled for curve walking animations. Can be disabled for straight animations with strong hip Motion like Rolling",
         default=True)
 
     scale = bpy.props.FloatProperty(
@@ -202,15 +207,16 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         status = mixamoconv.hip_to_root(
             armature = bpy.context.object,
             use_x = mixamo.use_x,
-            use_y =mixamo.use_y,
-            use_z =mixamo.use_z,
-            on_ground =mixamo.on_ground,
-            scale =mixamo.scale,
-            restoffset =mixamo.restoffset,
-            hipname =mixamo.hipname.decode('UTF-8'),
-            fixbind =mixamo.fixbind,
-            apply_rotation =mixamo.apply_rotation,
-            apply_scale =mixamo.apply_scale)
+            use_y = mixamo.use_y,
+            use_z = mixamo.use_z,
+            on_ground = mixamo.on_ground,
+            use_rotation = mixamo.use_rotation,
+            scale = mixamo.scale,
+            restoffset = mixamo.restoffset,
+            hipname = mixamo.hipname.decode('UTF-8'),
+            fixbind = mixamo.fixbind,
+            apply_rotation = mixamo.apply_rotation,
+            apply_scale = mixamo.apply_scale)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{ 'CANCELLED'}
@@ -268,21 +274,22 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
         numfiles = mixamoconv.batch_hip_to_root(
             bpy.path.abspath(inpath),
             bpy.path.abspath(outpath),
-            use_x =mixamo.use_x,
-            use_y =mixamo.use_y,
-            use_z =mixamo.use_z,
-            on_ground =mixamo.on_ground,
-            scale =mixamo.scale,
-            restoffset =mixamo.restoffset,
-            hipname =mixamo.hipname,
-            fixbind =mixamo.fixbind,
-            apply_rotation =mixamo.apply_rotation,
-            apply_scale =mixamo.apply_scale,
-            b_remove_namespace =mixamo.b_remove_namespace,
-            b_unreal_bones =mixamo.b_unreal_bones,
-            add_leaf_bones =mixamo.add_leaf_bones,
-            knee_offset =mixamo.knee_offset,
-            ignore_leaf_bones =mixamo.ignore_leaf_bones)
+            use_x = mixamo.use_x,
+            use_y = mixamo.use_y,
+            use_z = mixamo.use_z,
+            on_ground = mixamo.on_ground,
+            use_rotation = mixamo.use_rotation,
+            scale = mixamo.scale,
+            restoffset = mixamo.restoffset,
+            hipname = mixamo.hipname,
+            fixbind = mixamo.fixbind,
+            apply_rotation = mixamo.apply_rotation,
+            apply_scale = mixamo.apply_scale,
+            b_remove_namespace = mixamo.b_remove_namespace,
+            b_unreal_bones = mixamo.b_unreal_bones,
+            add_leaf_bones = mixamo.add_leaf_bones,
+            knee_offset = mixamo.knee_offset,
+            ignore_leaf_bones = mixamo.ignore_leaf_bones)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{ 'CANCELLED'}
@@ -319,7 +326,8 @@ class MixamoconvPanel(bpy.types.Panel):
         row.prop(scene.mixamo, "use_z", toggle =True)
         if scene.mixamo.use_z:
             row.prop(scene.mixamo, "on_ground", toggle =True)
-
+        row = box.row()
+        row.prop(scene.mixamo, "use_rotation", toggle = True)
         # Button for conversion of single Selected rig
         row = box.row()
         row.scale_y = 2.0

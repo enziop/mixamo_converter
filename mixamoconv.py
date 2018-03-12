@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-    Copyright (C) 2017  Enzio Probst
+    Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
+    Copyright (C) 2017-2018  Enzio Probst
   
     Created by Enzio Probst
 
@@ -181,7 +182,7 @@ def quaternion_cleanup(object):
                 for j in range(4):
                     zipped[i][j].co.y *= -1.0
 
-def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, scale=1.0, restoffset=(0, 0, 0),
+def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0, restoffset=(0, 0, 0),
                 hipname='', fixbind=True, apply_rotation=True, apply_scale=False):
     """function to bake hipmotion to RootMotion in MixamoRigs"""
     
@@ -251,6 +252,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
     bpy.context.object.constraints["Copy Rotation"].use_y = False
     bpy.context.object.constraints["Copy Rotation"].use_x = False
+    bpy.context.object.constraints["Copy Rotation"].use_z = use_rotation
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
@@ -343,7 +345,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, sc
     return 1
 
 
-def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, on_ground=True, scale=1.0,
+def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0,
                       restoffset=(0, 0, 0), hipname='', fixbind=True, apply_rotation=True, apply_scale=False,
                       b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True):
     """Batch Convert MixamoRigs"""
@@ -418,7 +420,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             armature = getArmature(bpy.context.selected_objects)
 
             # do hip to Root conversion
-            if hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, scale=scale,
+            if hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
                            restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
                            apply_scale=apply_scale) == -1:
                 return -1
