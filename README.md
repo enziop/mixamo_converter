@@ -129,7 +129,7 @@ To achieve this you have to:
 +  Edit the changes in Pycharm
 +  Click "Run Script" in blender to reload the project with the new changes
 
-'''
+```python
 import bpy
 import os
 import sys
@@ -139,6 +139,6 @@ sys.path.insert(0, git_path)
 filename = os.path.join(git_path, '__init__.py')
 
 exec(compile(open(filename).read(), filename, 'exec'))
-'''
+```
 
 Happy Converting
