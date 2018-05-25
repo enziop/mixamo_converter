@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 1, 0),
+    "version": (1, 1, 1),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -148,6 +148,14 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         name="Apply Scale",
         description="Applies scale during conversion to prevent rotation and scaling issues",
         default=False)
+    quaternion_clean_pre = bpy.props.BoolProperty(
+        name="Quaternion Clean Pre",
+        description="Performs quaternion cleanup to before conversion",
+        default=True)
+    quaternion_clean_post = bpy.props.BoolProperty(
+        name="Quaternion Clean Post",
+        description="Performs quaternion cleanup after conversion",
+        default=True)
 
 
 class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
@@ -216,7 +224,9 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             hipname = mixamo.hipname.decode('UTF-8'),
             fixbind = mixamo.fixbind,
             apply_rotation = mixamo.apply_rotation,
-            apply_scale = mixamo.apply_scale)
+            apply_scale = mixamo.apply_scale,
+            quaternion_clean_pre=mixamo.quaternion_clean_pre,
+            quaternion_clean_post=mixamo.quaternion_clean_post)
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{ 'CANCELLED'}
@@ -289,7 +299,9 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             b_unreal_bones = mixamo.b_unreal_bones,
             add_leaf_bones = mixamo.add_leaf_bones,
             knee_offset = mixamo.knee_offset,
-            ignore_leaf_bones = mixamo.ignore_leaf_bones)
+            ignore_leaf_bones = mixamo.ignore_leaf_bones,
+            quaternion_clean_pre=mixamo.quaternion_clean_pre,
+            quaternion_clean_post=mixamo.quaternion_clean_post)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
             return{ 'CANCELLED'}
@@ -309,16 +321,6 @@ class MixamoconvPanel(bpy.types.Panel):
         layout = self.layout
 
         scene = bpy.context.scene
-
-        ''' Annoying warning Box
-        #box with general info
-        infobox = layout.box()
-        infobox.label(icon = 'ERROR', text = "Attention:")
-        row = infobox.row()
-        row.label("Batch Convert will delete everything from your current scene")
-        row = infobox.row()
-        row.label("Only use in empty or startup scene")
-        '''
 
         box = layout.box()
         # Options for how to do the conversion
@@ -362,6 +364,10 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
             row.prop(scene.mixamo, "apply_rotation")
+            row = box.row()
+            row.prop(scene.mixamo, "quaternion_clean_pre")
+            row.prop(scene.mixamo, "quaternion_clean_post")
+
 
             row = box.row()
             row.prop(scene.mixamo, "apply_scale")
