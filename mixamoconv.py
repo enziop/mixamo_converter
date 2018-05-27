@@ -328,13 +328,12 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     bpy.context.object.constraints["Copy Rotation"].target = bpy.data.objects["rootBaker"]
     bpy.context.object.constraints["Copy Rotation"].use_offset = True
     yield Status("root constrained to rootBaker")
-    #root.rotation_mode = 'QUATERNION'
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
     yield Status("rootBaker baked back")
     quaternion_cleanup(root)
-    yield Status("root quatFix")
+    yield Status("root quaternion cleanup")
 
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
@@ -352,7 +351,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
     if quaternion_clean_post:
         quaternion_cleanup(root)
-        yield Status("root quatfix")
+        yield Status("root quaternion cleanup")
 
     # Delete helpers
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -464,6 +463,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 for a in objects:
                     if a.type == 'ARMATURE':
                         return a
+                raise TypeError("No Armature found")
 
             armature = getArmature(bpy.context.selected_objects)
 

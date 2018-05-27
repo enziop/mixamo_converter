@@ -246,7 +246,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
 class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle_stepwise"
-    bl_label = "Convert Stepwise"
+    bl_label = "Convert Single Stepwise"
     description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
 
     def execute(self, context):
@@ -427,9 +427,9 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
             row.prop(scene.mixamo, "apply_rotation")
-            row = box.row()
-            row.prop(scene.mixamo, "quaternion_clean_pre")
-            row.prop(scene.mixamo, "quaternion_clean_post")
+            # row = box.row()
+            # row.prop(scene.mixamo, "quaternion_clean_pre")
+            # row.prop(scene.mixamo, "quaternion_clean_post")
 
 
             row = box.row()
