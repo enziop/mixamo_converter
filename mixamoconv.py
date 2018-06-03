@@ -293,7 +293,15 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
+<<<<<<< Updated upstream
 
+=======
+    yield Status("rootBaker baked back")
+    quaternion_cleanup(root)
+    yield Status("root quaternion cleanup")
+    hipsBaker.select = False
+    
+>>>>>>> Stashed changes
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
     root.data.bones.active = hips.bone

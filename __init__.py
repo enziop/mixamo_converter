@@ -227,10 +227,73 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             apply_scale = mixamo.apply_scale,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post)
+<<<<<<< Updated upstream
         if status == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
+=======
+        try:
+            for status in mixamoconv_iterator:
+                if mixamo.verbose_mode:
+                    self.report({'INFO'}, "Step Done: " + str(status))
+                else: pass
+        except Exception as e:
+            self.report({'ERROR_INVALID_INPUT'}, 'Error: ' + str(e))
             return{ 'CANCELLED'}
         self.report({'INFO'}, "Rig Converted")
+        return{ 'FINISHED'}
+
+class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
+    '''Button/Operator for converting single Rig'''
+    bl_idname = "mixamo.convertsingle_stepwise"
+    bl_label = "Convert Single Stepwise"
+    description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
+
+    def execute(self, context):
+        mixamo = context.scene.mixamo
+        
+        try:
+            if (bpy._mixamoconv_iterator == None):
+                raise AttributeError
+        except AttributeError:
+            if bpy.context.object == None:
+                self.report({'ERROR_INVALID_INPUT'}, "Error: no object selected. Please select the Armature object.")
+                return{ 'CANCELLED'}
+            if bpy.context.object.type != 'ARMATURE':
+                self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
+                return{ 'CANCELLED'}
+            if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'mixamorig_Hips', 'Hips', mixamo.hipname.decode('UTF-8')):
+                self.report({'ERROR_INVALID_INPUT'},
+                            "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
+                return{ 'CANCELLED'}
+            bpy._mixamoconv_iterator = mixamoconv.hip_to_root(
+                armature = bpy.context.object,
+                use_x = mixamo.use_x,
+                use_y = mixamo.use_y,
+                use_z = mixamo.use_z,
+                on_ground = mixamo.on_ground,
+                use_rotation = mixamo.use_rotation,
+                scale = mixamo.scale,
+                restoffset = mixamo.restoffset,
+                hipname = mixamo.hipname.decode('UTF-8'),
+                fixbind = mixamo.fixbind,
+                apply_rotation = mixamo.apply_rotation,
+                apply_scale = mixamo.apply_scale,
+                quaternion_clean_pre=mixamo.quaternion_clean_pre,
+                quaternion_clean_post=mixamo.quaternion_clean_post)
+            self.report({'INFO'}, "New conversion started")
+        try:
+            try:
+                status = bpy._mixamoconv_iterator.__next__()
+                self.report({'INFO'}, "Step Done: " + str(status))
+            except StopIteration as stop:
+                del bpy._mixamoconv_iterator
+                if stop.value != 1:
+                    self.report({'ERROR'}, 'Error: conversion returned with' + str(stop))
+                    return{ 'CANCELLED'}
+        except Exception as e:
+            self.report({'ERROR_INVALID_INPUT'}, 'Error: ' + str(e))
+>>>>>>> Stashed changes
+            return{ 'CANCELLED'}
         return{ 'FINISHED'}
 
 
