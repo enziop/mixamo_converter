@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 1, 1),
+    "version": (1, 1, 2),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -54,6 +54,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     experimental = bpy.props.BoolProperty(
         name="Experimental Options",
         description="Experimental Options (use with caution, dirty workarounds)",
+        default=False)
+    verbose_mode = bpy.props.BoolProperty(
+        name="Verbose Mode",
+        description="Enables verbose output for each step when converting",
         default=False)
 
     use_x = bpy.props.BoolProperty(
@@ -212,7 +216,8 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             self.report({'ERROR_INVALID_INPUT'},
                         "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
             return{ 'CANCELLED'}
-        status = mixamoconv.hip_to_root(
+
+        mixamoconv_iterator = mixamoconv.hip_to_root(
             armature = bpy.context.object,
             use_x = mixamo.use_x,
             use_y = mixamo.use_y,
@@ -227,10 +232,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             apply_scale = mixamo.apply_scale,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post)
-<<<<<<< Updated upstream
-        if status == -1:
-            self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
-=======
+
         try:
             for status in mixamoconv_iterator:
                 if mixamo.verbose_mode:
@@ -241,6 +243,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             return{ 'CANCELLED'}
         self.report({'INFO'}, "Rig Converted")
         return{ 'FINISHED'}
+
 
 class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
@@ -292,7 +295,6 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
                     return{ 'CANCELLED'}
         except Exception as e:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: ' + str(e))
->>>>>>> Stashed changes
             return{ 'CANCELLED'}
         return{ 'FINISHED'}
 
@@ -427,9 +429,9 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "fixbind")
             row.prop(scene.mixamo, "apply_rotation")
-            row = box.row()
-            row.prop(scene.mixamo, "quaternion_clean_pre")
-            row.prop(scene.mixamo, "quaternion_clean_post")
+            # row = box.row()
+            # row.prop(scene.mixamo, "quaternion_clean_pre")
+            # row.prop(scene.mixamo, "quaternion_clean_post")
 
 
             row = box.row()
@@ -440,6 +442,8 @@ class MixamoconvPanel(bpy.types.Panel):
             row = box.row()
             row.prop(scene.mixamo, "experimental", toggle=True, icon='ERROR')
             if scene.mixamo.experimental:
+                row = box.row()
+                row.operator("mixamo.convertsingle_stepwise")
                 split = box.split()
                 col = split.column()
                 col.prop(scene.mixamo, "restoffset")

@@ -25,6 +25,8 @@ import re
 import logging
 import bpy
 from bpy_types import Object
+from math import pi
+from mathutils import Quaternion
 
 log = logging.getLogger(__name__)
 
@@ -160,26 +162,49 @@ def get_all_quaternion_curves(object):
     fcurves = object.animation_data.action.fcurves
     if fcurves.find('rotation_quaternion'):
         yield (fcurves.find('rotation_quaternion', 0), fcurves.find('rotation_quaternion', 1), fcurves.find('rotation_quaternion', 2), fcurves.find('rotation_quaternion', 3))
-    for bone in object.pose.bones:
-        data_path = 'pose.bones["' + bone.name + '"].rotation_quaternion'
-        if fcurves.find(data_path):
-            yield (fcurves.find(data_path, 0), fcurves.find(data_path, 1),fcurves.find(data_path, 2),fcurves.find(data_path, 3))
+    if object.type == 'ARMATURE':
+        for bone in object.pose.bones:
+            data_path = 'pose.bones["' + bone.name + '"].rotation_quaternion'
+            if fcurves.find(data_path):
+                yield (fcurves.find(data_path, 0), fcurves.find(data_path, 1),fcurves.find(data_path, 2),fcurves.find(data_path, 3))
 
-def quaternion_cleanup(object):
+def quaternion_cleanup(object, prevent_flips=True, prevent_inverts=True):
     """fixes signs in quaternion fcurves swapping from one frame to another"""
     for curves in get_all_quaternion_curves(object):
+        start = int(min((curves[i].keyframe_points[0].co.x for i in range(4))))
+        end = int(max((curves[i].keyframe_points[-1].co.x for i in range(4))))
+        for curve in curves:
+            for i in range(start, end):
+                curve.keyframe_points.insert(i, curve.evaluate(i)).interpolation = 'LINEAR'
         zipped = list(zip(
             curves[0].keyframe_points,
             curves[1].keyframe_points,
             curves[2].keyframe_points,
             curves[3].keyframe_points))
         for i in range(1, len(zipped)):
-            change_amount = 0.0
-            for j in range(4):
-                change_amount += abs(zipped[i-1][j].co.y - zipped[i][j].co.y)
-            if change_amount > 1.0:
+            if prevent_flips:
+                rot_prev = Quaternion((zipped[i-1][j].co.y for j in range(4)))
+                rot_cur = Quaternion((zipped[i][j].co.y for j in range(4)))
+                diff = rot_prev.rotation_difference(rot_cur)
+                if abs(diff.angle - pi) < 2.5:
+                    rot_cur.rotate(Quaternion(diff.axis, pi))
+                    for j in range(4):
+                        zipped[i][j].co.y = rot_cur[j]
+            if prevent_inverts:
+                change_amount = 0.0
                 for j in range(4):
-                    zipped[i][j].co.y *= -1.0
+                    change_amount += abs(zipped[i-1][j].co.y - zipped[i][j].co.y)
+                if change_amount > 1.0:
+                    for j in range(4):
+                        zipped[i][j].co.y *= -1.0
+            
+
+class Status:
+    def __init__(self, msg, status_type='default'):
+        self.msg = msg
+        self.status_type = status_type
+    def __str__(self):
+        return str(self.msg)
 
 def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0, restoffset=(0, 0, 0),
                 hipname='', fixbind=True, apply_rotation=True, apply_scale=False, quaternion_clean_pre=True, quaternion_clean_post=True):
@@ -196,7 +221,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
             break
     if hips == None:
         log.warning('WARNING I have not found any hip bone for %s and the conversion is stopping here',  root.pose.bones)
-        return -1
+        raise ValueError("no hips found")
 
     # Scale by ScaleFactor
     if scale != 1.0:
@@ -205,19 +230,22 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
             if fcurve != None:
                 root.animation_data.action.fcurves.remove(fcurve)
         root.scale *= scale
+        yield Status("scaling")
 
     # fix quaternion sign swapping
     if quaternion_clean_pre:
         quaternion_cleanup(root)
+        yield Status("quaternion clean pre")
 
     # apply restoffset to restpose and correct animation
     apply_restoffset(root, hips, restoffset)
+    yield Status("restoffset")
 
     hiplocation_world = root.matrix_local * hips.bone.head
     z_offset = hiplocation_world[2]
 
     # Create helper to bake the root motion
-    bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(
+    bpy.ops.object.empty_add(type='ARROWS', radius=1, view_align=False, location=(0, 0, 0), layers=(
     True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
     False, False, False, False))
     rootBaker = bpy.context.object
@@ -253,12 +281,16 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     bpy.context.object.constraints["Copy Rotation"].use_y = False
     bpy.context.object.constraints["Copy Rotation"].use_x = False
     bpy.context.object.constraints["Copy Rotation"].use_z = use_rotation
+    yield Status("rootBaker creater")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
+    yield Status("rootBaker baked")
+    quaternion_cleanup(rootBaker)
+    yield Status("rootBaker quatCleanup")
 
     # Create helper to bake hipmotion in Worldspace
-    bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(
+    bpy.ops.object.empty_add(type='ARROWS', radius=1, view_align=False, location=(0, 0, 0), layers=(
     True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
     False, False, False, False))
     hipsBaker = bpy.context.object
@@ -272,9 +304,13 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     bpy.ops.object.constraint_add(type='COPY_ROTATION')
     bpy.context.object.constraints["Copy Rotation"].target = root
     bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
+    yield Status("hipsBaker creater")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
+    yield Status("hipsBaker baked")
+    quaternion_cleanup(hipsBaker)
+    yield Status("hipsBaker quatClenaup")
 
     # select armature
     root.select = True
@@ -282,6 +318,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
     if apply_rotation or apply_scale:
         bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
+        yield Status("apply transform")
 
     # Bake Root motion to Armature (root)
     bpy.ops.object.constraint_add(type='COPY_LOCATION')
@@ -290,18 +327,16 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     bpy.ops.object.constraint_add(type='COPY_ROTATION')
     bpy.context.object.constraints["Copy Rotation"].target = bpy.data.objects["rootBaker"]
     bpy.context.object.constraints["Copy Rotation"].use_offset = True
+    yield Status("root constrained to rootBaker")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
-<<<<<<< Updated upstream
 
-=======
     yield Status("rootBaker baked back")
     quaternion_cleanup(root)
     yield Status("root quaternion cleanup")
     hipsBaker.select = False
-    
->>>>>>> Stashed changes
+
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
     root.data.bones.active = hips.bone
@@ -310,12 +345,15 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     hips.constraints["Copy Location"].target = hipsBaker
     bpy.ops.pose.constraint_add(type='COPY_ROTATION')
     hips.constraints["Copy Rotation"].target = hipsBaker
+    yield Status("hips constrained to hipsBaker")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'POSE'})
+    yield Status("hipsBaker baked back")
 
     if quaternion_clean_post:
         quaternion_cleanup(root)
+        yield Status("root quaternion cleanup")
 
     # Delete helpers
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -325,6 +363,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     rootBaker.select = True
 
     bpy.ops.object.delete(use_global=False)
+    yield Status("bakers deleted")
 
     # bind armature to dummy mesh if it doesn't have any
     if fixbind:
@@ -346,11 +385,12 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
             root.select = True
             bpy.context.scene.objects.active = root
             bpy.ops.object.parent_set(type='ARMATURE')
+            yield Status("binddummy created")
         elif apply_rotation or apply_scale:
             bindmesh.select = True
             bpy.context.scene.objects.active = bindmesh
             bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
-
+            yield Status("apply transform to bindmesh")
     return 1
 
 
@@ -377,7 +417,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                                                               use_anim=True, anim_offset=1.0,
                                                               use_custom_props=True,
                                                               use_custom_props_enum_as_string=True,
-                                                              ignore_leaf_bones=False,
+                                                              ignore_leaf_bones=ignore_leaf_bones,
                                                               force_connect_children=False,
                                                               automatic_bone_orientation=True,
                                                               primary_bone_axis='Y',
@@ -425,13 +465,18 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 for a in objects:
                     if a.type == 'ARMATURE':
                         return a
+                raise TypeError("No Armature found")
 
             armature = getArmature(bpy.context.selected_objects)
 
             # do hip to Root conversion
-            if hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
-                           restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
-                           apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post) == -1:
+            try:
+                for step in hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
+                            restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
+                            apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post):
+                    pass
+            except Exception as e:
+                log.warning("WARNING hip_to_root raised %s when processing %s" % (str(e), file.name))
                 return -1
 
 
