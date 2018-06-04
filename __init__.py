@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 1, 2),
+    "version": (1, 1, 3),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -232,6 +232,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             apply_scale = mixamo.apply_scale,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post)
+
         try:
             for status in mixamoconv_iterator:
                 if mixamo.verbose_mode:
@@ -243,6 +244,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         self.report({'INFO'}, "Rig Converted")
         return{ 'FINISHED'}
 
+
 class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle_stepwise"
@@ -253,7 +255,7 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
         mixamo = context.scene.mixamo
         
         try:
-            if (bpy._mixamoconv == None):
+            if (bpy._mixamoconv_iterator == None):
                 raise AttributeError
         except AttributeError:
             if bpy.context.object == None:
@@ -281,6 +283,7 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
                 apply_scale = mixamo.apply_scale,
                 quaternion_clean_pre=mixamo.quaternion_clean_pre,
                 quaternion_clean_post=mixamo.quaternion_clean_post)
+            self.report({'INFO'}, "New conversion started")
         try:
             try:
                 status = bpy._mixamoconv_iterator.__next__()
@@ -293,7 +296,6 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
         except Exception as e:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: ' + str(e))
             return{ 'CANCELLED'}
-        self.report({'INFO'}, "Rig Converted")
         return{ 'FINISHED'}
 
 

@@ -186,7 +186,7 @@ def quaternion_cleanup(object, prevent_flips=True, prevent_inverts=True):
                 rot_prev = Quaternion((zipped[i-1][j].co.y for j in range(4)))
                 rot_cur = Quaternion((zipped[i][j].co.y for j in range(4)))
                 diff = rot_prev.rotation_difference(rot_cur)
-                if abs(diff.angle - pi) < 2.5:
+                if abs(diff.angle - pi) < 0.5:
                     rot_cur.rotate(Quaternion(diff.axis, pi))
                     for j in range(4):
                         zipped[i][j].co.y = rot_cur[j]
@@ -331,9 +331,11 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
+
     yield Status("rootBaker baked back")
     quaternion_cleanup(root)
     yield Status("root quaternion cleanup")
+    hipsBaker.select = False
 
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
