@@ -186,7 +186,7 @@ def quaternion_cleanup(object, prevent_flips=True, prevent_inverts=True):
                 rot_prev = Quaternion((zipped[i-1][j].co.y for j in range(4)))
                 rot_cur = Quaternion((zipped[i][j].co.y for j in range(4)))
                 diff = rot_prev.rotation_difference(rot_cur)
-                if abs(diff.angle - pi) < 2.5:
+                if abs(diff.angle - pi) < 0.5:
                     rot_cur.rotate(Quaternion(diff.axis, pi))
                     for j in range(4):
                         zipped[i][j].co.y = rot_cur[j]
