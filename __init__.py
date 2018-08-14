@@ -125,6 +125,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         name="Ignore Leaf Bones",
         description="Ignore leaf bones on import",
         default=True)
+    automatic_bone_orientation = bpy.props.BoolProperty(
+        name="Automatic Bone Orientation",
+        description="Try to align the major bone axis with the bone children",
+        default=True)
 
     hipname = bpy.props.StringProperty(
         name="Hip Name",
@@ -365,6 +369,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             add_leaf_bones = mixamo.add_leaf_bones,
             knee_offset = mixamo.knee_offset,
             ignore_leaf_bones = mixamo.ignore_leaf_bones,
+            automatic_bone_orientation = mixamo.automatic_bone_orientation,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post)
         if numfiles == -1:
@@ -459,18 +464,24 @@ class MixamoconvPanel(bpy.types.Panel):
         # input and output paths for batch conversion
         box = layout.box()
         box.label(text="Batch")
-        split = box.split()
-        col = split.column()
-        col.prop(scene.mixamo, "inpath")
-
-        # row = box.row()
-        col.prop(scene.mixamo, "outpath")
+        #split = box.split()
+        #col = split.column()
+        row = box.row()
+        row.prop(scene.mixamo, "inpath")
         if scene.mixamo.advanced:
-            col = split.column()
-            col.prop(scene.mixamo, "ignore_leaf_bones")
-            col.prop(scene.mixamo, "add_leaf_bones")
+            row = box.row()
+            row.prop(scene.mixamo, "ignore_leaf_bones")
+            row.prop(scene.mixamo, "automatic_bone_orientation")
 
-        box.prop(scene.mixamo, "force_overwrite")
+        row = box.row()
+        row.prop(scene.mixamo, "outpath")
+        if scene.mixamo.advanced:
+        #     col = split.column()
+        #     col.prop(scene.mixamo, "ignore_leaf_bones")
+            row = box.row()
+            row.prop(scene.mixamo, "add_leaf_bones")
+            row.prop(scene.mixamo, "force_overwrite")
+
 
         # button to start batch conversion
         row = box.row()
