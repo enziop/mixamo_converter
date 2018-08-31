@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 1, 3),
+    "version": (1, 1, 4),
     "blender": (2, 7, 8),
     "location": "3D View > Tool Shelve > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -373,7 +373,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post)
         if numfiles == -1:
-            self.report({'ERROR_INVALID_INPUT'}, 'Error: Hips not found')
+            self.report({'ERROR_INVALID_INPUT'}, 'Error: Not all files could be converted, look in console for more information')
             return{ 'CANCELLED'}
         self.report({'INFO'}, "%d files converted" % numfiles)
         return{ 'FINISHED'}

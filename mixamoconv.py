@@ -29,6 +29,7 @@ from math import pi
 from mathutils import Quaternion
 
 log = logging.getLogger(__name__)
+#log.setLevel('DEBUG')
 
 def remove_namespace(s=''):
     """function for removing all namespaces from strings, objects or even armatrure bones"""
@@ -123,6 +124,16 @@ def rename_bones(s='', t='unreal'):
         return 1
     return -1
 
+def key_all_bones(armature, frame_range = (1, 2)):
+    """Sets keys for all Bones in frame_range"""
+    bpy.context.scene.objects.active = armature
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='SELECT')
+    for i in range(*frame_range):
+        bpy.context.scene.frame_current = i
+        bpy.ops.anim.keyframe_insert_menu(type='BUILTIN_KSI_LocRot')
+    bpy.ops.object.mode_set(mode='OBJECT')
+
 def apply_restoffset(armature, hipbone, restoffset):
     """function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet"""
     # apply rest offset to restpose
@@ -210,6 +221,8 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
                 hipname='', fixbind=True, apply_rotation=True, apply_scale=False, quaternion_clean_pre=True, quaternion_clean_post=True):
     """function to bake hipmotion to RootMotion in MixamoRigs"""
 
+    yield Status("starting hip_to_root")
+
     root = armature
     root.name = "root"
     root.rotation_mode = 'QUATERNION'
@@ -222,6 +235,10 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     if hips == None:
         log.warning('WARNING I have not found any hip bone for %s and the conversion is stopping here',  root.pose.bones)
         raise ValueError("no hips found")
+    else:
+        yield Status("hips found")
+
+    key_all_bones(root, (1, 2))
 
     # Scale by ScaleFactor
     if scale != 1.0:
@@ -474,9 +491,10 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 for step in hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
                             restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
                             apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post):
+                    #DEBUG log.error(str(step))
                     pass
             except Exception as e:
-                log.warning("WARNING hip_to_root raised %s when processing %s" % (str(e), file.name))
+                log.error("ERROR hip_to_root raised %s when processing %s" % (str(e), file.name))
                 return -1
 
 
