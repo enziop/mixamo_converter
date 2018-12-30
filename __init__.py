@@ -216,10 +216,10 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
         if bpy.context.object.type != 'ARMATURE':
             self.report({'ERROR_INVALID_INPUT'}, "Error: %s is not an Armature." % bpy.context.object.name)
             return{ 'CANCELLED'}
-        if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'mixamorig_Hips', 'Hips', mixamo.hipname.decode('UTF-8')):
-            self.report({'ERROR_INVALID_INPUT'},
-                        "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
-            return{ 'CANCELLED'}
+        #if bpy.context.object.data.bones[0].name not in ('mixamorig:Hips', 'mixamorig_Hips', 'Hips', mixamo.hipname.decode('UTF-8')):
+        #    self.report({'ERROR_INVALID_INPUT'},
+        #                "Selected object %s is not a Mixamo rig, or at least naming does not match!" % bpy.context.object.name)
+        #    return{ 'CANCELLED'}
 
         mixamoconv_iterator = mixamoconv.hip_to_root(
             armature = bpy.context.object,
