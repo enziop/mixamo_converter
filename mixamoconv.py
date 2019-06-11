@@ -126,7 +126,7 @@ def rename_bones(s='', t='unreal'):
 
 def key_all_bones(armature, frame_range = (1, 2)):
     """Sets keys for all Bones in frame_range"""
-    bpy.context.scene.objects.active = armature
+    bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='POSE')
     bpy.ops.pose.select_all(action='SELECT')
     for i in range(*frame_range):
@@ -137,18 +137,18 @@ def key_all_bones(armature, frame_range = (1, 2)):
 def apply_restoffset(armature, hipbone, restoffset):
     """function to apply restoffset to rig, should be used if rest-/bindpose does not stand on ground with feet"""
     # apply rest offset to restpose
-    bpy.context.scene.objects.active = armature
+    bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.armature.select_all(action='SELECT')
     bpy.ops.transform.translate(value=restoffset, constraint_axis=(False, False, False),
-                                constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED',
-                                proportional_edit_falloff='SMOOTH', proportional_size=1)
+                                orient_type='GLOBAL', mirror=False, use_proportional_edit=False,
+                                )
     bpy.ops.object.mode_set(mode='OBJECT')
 
     # apply restoffset to animation of hip
     restoffset_local = (restoffset[0], restoffset[2], -restoffset[1])
     for axis in range(3):
-        fcurve = armature.animation_data.action.fcurves.find("pose.bones[\"" + hipbone.name + "\"].location", axis)
+        fcurve = armature.animation_data.action.fcurves.find("pose.bones[\"" + hipbone.name + "\"].location", index=axis)
         for pi in range(len(fcurve.keyframe_points)):
             fcurve.keyframe_points[pi].co.y -= restoffset_local[axis] / armature.scale.x
     return 1
@@ -159,12 +159,12 @@ def apply_kneefix(armature, offset, bonenames=['RightUpLeg', 'LeftUpLeg']):
     if bpy.context.scene.mixamo.b_unreal_bones:
         bonenames = ["calf_r", "calf_l"]
 
-    bpy.context.scene.objects.active = armature
+    bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.armature.select_all(action='DESELECT')
     for name in bonenames:
         armature.data.edit_bones[name].select_tail = True
-    bpy.ops.transform.translate(value=offset, proportional='DISABLED', release_confirm=True)
+    bpy.ops.transform.translate(value=offset, use_proportional_edit=False, release_confirm=True)
     bpy.ops.object.mode_set(mode='OBJECT')
     return 1
 
@@ -172,12 +172,12 @@ def get_all_quaternion_curves(object):
     """returns all quaternion fcurves of object/bones packed together in a touple per object/bone"""
     fcurves = object.animation_data.action.fcurves
     if fcurves.find('rotation_quaternion'):
-        yield (fcurves.find('rotation_quaternion', 0), fcurves.find('rotation_quaternion', 1), fcurves.find('rotation_quaternion', 2), fcurves.find('rotation_quaternion', 3))
+        yield (fcurves.find('rotation_quaternion', index=0), fcurves.find('rotation_quaternion', index=1), fcurves.find('rotation_quaternion', index=2), fcurves.find('rotation_quaternion', index=3))
     if object.type == 'ARMATURE':
         for bone in object.pose.bones:
             data_path = 'pose.bones["' + bone.name + '"].rotation_quaternion'
             if fcurves.find(data_path):
-                yield (fcurves.find(data_path, 0), fcurves.find(data_path, 1),fcurves.find(data_path, 2),fcurves.find(data_path, 3))
+                yield (fcurves.find(data_path, index=0), fcurves.find(data_path, index=1),fcurves.find(data_path, index=2),fcurves.find(data_path, index=3))
 
 def quaternion_cleanup(object, prevent_flips=True, prevent_inverts=True):
     """fixes signs in quaternion fcurves swapping from one frame to another"""
@@ -243,7 +243,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     # Scale by ScaleFactor
     if scale != 1.0:
         for i in range(3):
-            fcurve = root.animation_data.action.fcurves.find('scale', i)
+            fcurve = root.animation_data.action.fcurves.find('scale', index=i)
             if fcurve != None:
                 root.animation_data.action.fcurves.remove(fcurve)
         root.scale *= scale
@@ -258,13 +258,11 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     apply_restoffset(root, hips, restoffset)
     yield Status("restoffset")
 
-    hiplocation_world = root.matrix_local * hips.bone.head
+    hiplocation_world = root.matrix_local @ hips.bone.head
     z_offset = hiplocation_world[2]
 
     # Create helper to bake the root motion
-    bpy.ops.object.empty_add(type='ARROWS', radius=1, view_align=False, location=(0, 0, 0), layers=(
-    True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-    False, False, False, False))
+    bpy.ops.object.empty_add(type='ARROWS', radius=1, align='WORLD', location=(0, 0, 0))
     rootBaker = bpy.context.object
     rootBaker.name = "rootBaker"
     rootBaker.rotation_mode = 'QUATERNION'
@@ -307,9 +305,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     yield Status("rootBaker quatCleanup")
 
     # Create helper to bake hipmotion in Worldspace
-    bpy.ops.object.empty_add(type='ARROWS', radius=1, view_align=False, location=(0, 0, 0), layers=(
-    True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-    False, False, False, False))
+    bpy.ops.object.empty_add(type='ARROWS', radius=1, align='WORLD', location=(0, 0, 0))
     hipsBaker = bpy.context.object
     hipsBaker.name = "hipsBaker"
     hipsBaker.rotation_mode = 'QUATERNION'
@@ -330,8 +326,8 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     yield Status("hipsBaker quatClenaup")
 
     # select armature
-    root.select = True
-    bpy.context.scene.objects.active = root
+    root.select_set(True)
+    bpy.context.view_layer.objects.active = root
 
     if apply_rotation or apply_scale:
         bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
@@ -352,7 +348,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     yield Status("rootBaker baked back")
     quaternion_cleanup(root)
     yield Status("root quaternion cleanup")
-    hipsBaker.select = False
+    hipsBaker.select_set(False)
 
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
@@ -376,8 +372,8 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.select_all(action='DESELECT')
 
-    hipsBaker.select = True
-    rootBaker.select = True
+    hipsBaker.select_set(True)
+    rootBaker.select_set(True)
 
     bpy.ops.object.delete(use_global=False)
     yield Status("bakers deleted")
@@ -393,19 +389,16 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
                         break
         if bindmesh is None:
             bpy.ops.object.select_all(action='DESELECT')
-            bpy.ops.mesh.primitive_plane_add(radius=1, view_align=False, enter_editmode=False, location=(0, 0, 0),
-                                             layers=(
-                                             True, False, False, False, False, False, False, False, False, False, False,
-                                             False, False, False, False, False, False, False, False, False))
+            bpy.ops.mesh.primitive_plane_add(size=1, align='WORLD', enter_editmode=False, location=(0, 0, 0))
             binddummy = bpy.context.object
             binddummy.name = 'binddummy'
-            root.select = True
-            bpy.context.scene.objects.active = root
+            root.select_set(True)
+            bpy.context.view_layer.objects.active = root
             bpy.ops.object.parent_set(type='ARMATURE')
             yield Status("binddummy created")
         elif apply_rotation or apply_scale:
-            bindmesh.select = True
-            bpy.context.scene.objects.active = bindmesh
+            bindmesh.select_set(True)
+            bpy.context.view_layer.objects.active = bindmesh
             bpy.ops.object.transform_apply(location=False, rotation=apply_rotation, scale=apply_scale)
             yield Status("apply transform to bindmesh")
     return 1
@@ -510,7 +503,6 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             # store file to disk
             output_file = dest_dir + file.name[:-4] + ".fbx"
             bpy.ops.export_scene.fbx(filepath=output_file,
-                                     version='BIN7400',
                                      use_selection=False,
                                      apply_unit_scale=False,
                                      add_leaf_bones=add_leaf_bones,
