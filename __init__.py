@@ -436,8 +436,6 @@ class MixamoconvPanel(bpy.types.Panel):
             # row = box.row()
             # row.prop(scene.mixamo, "quaternion_clean_pre")
             # row.prop(scene.mixamo, "quaternion_clean_post")
-            row = box.row()
-            row.prop(scene.mixamo, "foot_bone_workaround")
 
             row = box.row()
             row.prop(scene.mixamo, "apply_scale")
@@ -460,6 +458,9 @@ class MixamoconvPanel(bpy.types.Panel):
                 row = col.row()
                 row.prop(scene.mixamo, "knee_bones")
                 row.enabled = not scene.mixamo.b_remove_namespace and not scene.mixamo.b_unreal_bones
+
+                row = box.row()
+                row.prop(scene.mixamo, "foot_bone_workaround")
 
         # input and output paths for batch conversion
         box = layout.box()
