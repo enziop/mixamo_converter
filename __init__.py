@@ -164,6 +164,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         name="Quaternion Clean Post",
         description="Performs quaternion cleanup after conversion",
         default=True)
+    foot_bone_workaround = bpy.props.BoolProperty(
+        name="Foot Bone Workaround",
+        description="Attempts to fix twisting of the foot bones",
+        default=False)
 
 
 class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
@@ -231,7 +235,8 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             apply_rotation = mixamo.apply_rotation,
             apply_scale = mixamo.apply_scale,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
-            quaternion_clean_post=mixamo.quaternion_clean_post)
+            quaternion_clean_post=mixamo.quaternion_clean_post,
+            foot_bone_workaround=mixamo.foot_bone_workaround)
 
         try:
             for status in mixamoconv_iterator:
@@ -278,7 +283,8 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
                 apply_rotation = mixamo.apply_rotation,
                 apply_scale = mixamo.apply_scale,
                 quaternion_clean_pre=mixamo.quaternion_clean_pre,
-                quaternion_clean_post=mixamo.quaternion_clean_post)
+                quaternion_clean_post=mixamo.quaternion_clean_post,
+                foot_bone_workaround=mixamo.foot_bone_workaround)
             self.report({'INFO'}, "New conversion started")
         try:
             try:
@@ -363,7 +369,8 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             ignore_leaf_bones = mixamo.ignore_leaf_bones,
             automatic_bone_orientation = mixamo.automatic_bone_orientation,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
-            quaternion_clean_post=mixamo.quaternion_clean_post)
+            quaternion_clean_post=mixamo.quaternion_clean_post,
+            foot_bone_workaround=mixamo.foot_bone_workaround)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Not all files could be converted, look in console for more information')
             return{ 'CANCELLED'}
@@ -429,7 +436,8 @@ class MixamoconvPanel(bpy.types.Panel):
             # row = box.row()
             # row.prop(scene.mixamo, "quaternion_clean_pre")
             # row.prop(scene.mixamo, "quaternion_clean_post")
-
+            row = box.row()
+            row.prop(scene.mixamo, "foot_bone_workaround")
 
             row = box.row()
             row.prop(scene.mixamo, "apply_scale")
