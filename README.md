@@ -96,6 +96,10 @@ Very kludgy workaround which can result in bones being out of place in animation
 Can be used to fix rotational flickering occuring in some animations after export (seems to be an exporter bug). (mostly observed on legs but can be used on any bones)
 It moves the tip joint of given bones by the given vector in the restpose.
 
+#### Option [Foot Bone Workaround]
+Workaround which attempts to fix the twisting of the foot bones (specifically, LeftToeBase/ball_l and RightToeBase/ball_r) of certain meshes,
+which may appear rotated by 180 degrees after conversion.
+
 ### Batch Conversion:
 * Here you can specify an Input- and Outputpath for Batchconversion
 * the output files will have the same names as the input files, existing files will be overwritten
