@@ -170,7 +170,7 @@ class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
     '''Button/Operator for removing namespaces from selection'''
     bl_idname = "mixamo.remove_namespace"
     bl_label = ""
-    description = "Removes all namespaces of selection (for single Convert)"
+    bl_description = "Removes all namespaces of selection (for single Convert)"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -188,7 +188,7 @@ class OBJECT_OT_UseBlenderBoneNames(bpy.types.Operator):
     '''Button/Operator for renaming bones to match unreal skeleton'''
     bl_idname = "mixamo.unreal_bones"
     bl_label = ""
-    description = "Renames bones to match the unreal skeleton (for single Convert)"
+    bl_description = "Renames bones to match the unreal skeleton (for single Convert)"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -206,7 +206,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle"
     bl_label = "Convert Single"
-    description = "Bakes rootmotion for a single, already imported rig."
+    bl_description = "Bakes rootmotion for a single, already imported rig."
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -249,7 +249,7 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle_stepwise"
     bl_label = "Convert Single Stepwise"
-    description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
+    bl_description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -299,7 +299,7 @@ class OBJECT_OT_ApplyRestoffset(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.apply_restoffset"
     bl_label = "Apply Restoffset"
-    description = "Applies Restoffset to restpose and corrects animation"
+    bl_description = "Applies Restoffset to restpose and corrects animation"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -324,7 +324,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
     '''Button/Operator for starting batch conversion'''
     bl_idname = "mixamo.convertbatch"
     bl_label = "Batch Convert"
-    description = "Converts all mixamorigs from the [Input Path] and exports them to the [Ouput Path]"
+    bl_description = "Converts all mixamorigs from the [Input Path] and exports them to the [Ouput Path]"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
