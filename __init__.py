@@ -47,124 +47,124 @@ if "bpy" in locals():
 
 class MixamoPropertyGroup(bpy.types.PropertyGroup):
     '''Property container for options and paths of mixamo Converter'''
-    advanced = bpy.props.BoolProperty(
+    advanced: bpy.props.BoolProperty(
         name="Advanced Options",
         description="Display advanced options",
         default=False)
-    experimental = bpy.props.BoolProperty(
+    experimental: bpy.props.BoolProperty(
         name="Experimental Options",
         description="Experimental Options (use with caution, dirty workarounds)",
         default=False)
-    verbose_mode = bpy.props.BoolProperty(
+    verbose_mode: bpy.props.BoolProperty(
         name="Verbose Mode",
         description="Enables verbose output for each step when converting",
         default=False)
 
-    use_x = bpy.props.BoolProperty(
+    use_x: bpy.props.BoolProperty(
         name="Use X",
         description="If enabled, Horizontal motion is transfered to RootBone",
         default=True)
-    use_y = bpy.props.BoolProperty(
+    use_y: bpy.props.BoolProperty(
         name="Use Y",
         description="If enabled, Horizontal motion is transfered to RootBone",
         default=True)
-    use_z = bpy.props.BoolProperty(
+    use_z: bpy.props.BoolProperty(
         name="Use Z",
         description="If enabled, vertical motion is transfered to RootBone",
         default=True)
-    on_ground = bpy.props.BoolProperty(
+    on_ground: bpy.props.BoolProperty(
         name="On Ground",
         description="If enabled, root bone is on ground and only moves up at jumps",
         default=True)
 
-    use_rotation = bpy.props.BoolProperty(
+    use_rotation: bpy.props.BoolProperty(
         name="Transfer Rotation",
         description="Whether to transfer roation to root motion. Should be enabled for curve walking animations. Can be disabled for straight animations with strong hip Motion like Rolling",
         default=True)
 
-    scale = bpy.props.FloatProperty(
+    scale: bpy.props.FloatProperty(
         name="Scale",
         description="Scale down the Rig by this factor",
         default=1.0)
-    restoffset = bpy.props.FloatVectorProperty(
+    restoffset: bpy.props.FloatVectorProperty(
         name="Restpose Offset",
         description="Offset restpose by this. Use to correct if origin is not on ground",
         default=(0.0, 0.0, 0.0))
-    knee_offset = bpy.props.FloatVectorProperty(
+    knee_offset: bpy.props.FloatVectorProperty(
         name="Knee Offset",
         description="Offset knee joints by this. Use to fix flipping legs.",
         default=(0.0, 0.0, 0.0))
-    knee_bones = bpy.props.StringProperty(
+    knee_bones: bpy.props.StringProperty(
         name="Knee Bones",
         description="Names of knee bones to offset. Seperate names with commas.",
         maxlen = 256,
         default = "RightUpLeg,LeftUpLeg",
         subtype='BYTE_STRING')
-    force_overwrite = bpy.props.BoolProperty(
+    force_overwrite: bpy.props.BoolProperty(
         name="Force Overwrite",
         description="If enabled, overwrites files if output path is the same as input",
         default=False)
 
-    inpath = bpy.props.StringProperty(
+    inpath: bpy.props.StringProperty(
         name="Input Path",
         description="Path to mixamorigs",
         maxlen = 256,
         default = "",
         subtype='FILE_PATH')
-    add_leaf_bones = bpy.props.BoolProperty(
+    add_leaf_bones: bpy.props.BoolProperty(
         name="Add Leaf Bones",
         description="If enabled, adds leaf bones on export when batchconverting",
         default=False)
-    outpath = bpy.props.StringProperty(
+    outpath: bpy.props.StringProperty(
         name="Output Path",
         description="Where Processed rigs should be saved to",
         maxlen = 256,
         default = "",
         subtype='FILE_PATH')
-    ignore_leaf_bones = bpy.props.BoolProperty(
+    ignore_leaf_bones: bpy.props.BoolProperty(
         name="Ignore Leaf Bones",
         description="Ignore leaf bones on import",
         default=True)
-    automatic_bone_orientation = bpy.props.BoolProperty(
+    automatic_bone_orientation: bpy.props.BoolProperty(
         name="Automatic Bone Orientation",
         description="Try to align the major bone axis with the bone children",
         default=True)
 
-    hipname = bpy.props.StringProperty(
+    hipname: bpy.props.StringProperty(
         name="Hip Name",
         description="Additional Hipname to search for if not MixamoRig",
         maxlen = 256,
         default = "",
         subtype='BYTE_STRING')
-    b_remove_namespace = bpy.props.BoolProperty(
+    b_remove_namespace: bpy.props.BoolProperty(
         name="Remove Namespace",
         description="Removes Naespaces from objects and bones",
         default=True)
-    b_unreal_bones = bpy.props.BoolProperty(
+    b_unreal_bones: bpy.props.BoolProperty(
         name="Use Unreal Engine bone schema",
         description="Renames bones to match unreal engine schema",
         default=False)
-    fixbind = bpy.props.BoolProperty(
+    fixbind: bpy.props.BoolProperty(
         name="Fix Bind",
         description="If enabled, adds a dummy mesh and binds it, to prevent loss of bindpose when exporting fbx",
         default=True)
-    apply_rotation = bpy.props.BoolProperty(
+    apply_rotation: bpy.props.BoolProperty(
         name="Apply Rotation",
         description="Applies rotation during conversion to prevent rotation and scaling issues",
         default=True)
-    apply_scale = bpy.props.BoolProperty(
+    apply_scale: bpy.props.BoolProperty(
         name="Apply Scale",
         description="Applies scale during conversion to prevent rotation and scaling issues",
         default=False)
-    quaternion_clean_pre = bpy.props.BoolProperty(
+    quaternion_clean_pre: bpy.props.BoolProperty(
         name="Quaternion Clean Pre",
         description="Performs quaternion cleanup to before conversion",
         default=True)
-    quaternion_clean_post = bpy.props.BoolProperty(
+    quaternion_clean_post: bpy.props.BoolProperty(
         name="Quaternion Clean Post",
         description="Performs quaternion cleanup after conversion",
         default=True)
-    foot_bone_workaround = bpy.props.BoolProperty(
+    foot_bone_workaround: bpy.props.BoolProperty(
         name="Foot Bone Workaround",
         description="Attempts to fix twisting of the foot bones",
         default=False)
