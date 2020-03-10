@@ -20,7 +20,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import os
+from pathlib import Path
 import re
 import logging
 import bpy
@@ -415,110 +415,118 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                       restoffset=(0, 0, 0), hipname='', fixbind=True, apply_rotation=True, apply_scale=False,
                       b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True, automatic_bone_orientation=True, quaternion_clean_pre=True, quaternion_clean_post=True):
     """Batch Convert MixamoRigs"""
+    
+    source_dir = Path(source_dir)
+    dest_dir = Path(dest_dir)
 
     bpy.context.scene.unit_settings.system = 'METRIC'
     bpy.context.scene.unit_settings.scale_length = 1
 
     numfiles = 0
-    for file in os.scandir(source_dir):
-        file_ext = file.name[-4::]
+    for file in source_dir.iterdir():
+        if not file.is_file():
+            continue
+        file_ext = file.suffix
         file_loader = {
-            ".fbx": lambda filename: bpy.ops.import_scene.fbx(filepath=filename, axis_forward='-Z',
-                                                              axis_up='Y', directory="",
-                                                              filter_glob="*.fbx", ui_tab='MAIN',
-                                                              use_manual_orientation=False, global_scale=1.0,
-                                                              bake_space_transform=False,
-                                                              use_custom_normals=True,
-                                                              use_image_search=True,
-                                                              use_alpha_decals=False, decal_offset=0.0,
-                                                              use_anim=True, anim_offset=1.0,
-                                                              use_custom_props=True,
-                                                              use_custom_props_enum_as_string=True,
-                                                              ignore_leaf_bones=ignore_leaf_bones,
-                                                              force_connect_children=False,
-                                                              automatic_bone_orientation=automatic_bone_orientation,
-                                                              primary_bone_axis='Y',
-                                                              secondary_bone_axis='X',
-                                                              use_prepost_rot=True),
-            ".dae": lambda filename: bpy.ops.wm.collada_import(filepath=filename, filter_blender=False,
-                                                               filter_backup=False, filter_image=False,
-                                                               filter_movie=False, filter_python=False,
-                                                               filter_font=False, filter_sound=False,
-                                                               filter_text=False, filter_btx=False,
-                                                               filter_collada=True, filter_alembic=False,
-                                                               filter_folder=True, filter_blenlib=False,
-                                                               filemode=8, display_type='DEFAULT',
-                                                               sort_method='FILE_SORT_ALPHA',
-                                                               import_units=False, fix_orientation=True,
-                                                               find_chains=True, auto_connect=True,
-                                                               min_chain_length=0)
+            ".fbx": lambda filename: bpy.ops.import_scene.fbx(
+                filepath=str(filename), axis_forward='-Z',
+                axis_up='Y', directory="",
+                filter_glob="*.fbx", ui_tab='MAIN',
+                use_manual_orientation=False, global_scale=1.0,
+                bake_space_transform=False,
+                use_custom_normals=True,
+                use_image_search=True,
+                use_alpha_decals=False, decal_offset=0.0,
+                use_anim=True, anim_offset=1.0,
+                use_custom_props=True,
+                use_custom_props_enum_as_string=True,
+                ignore_leaf_bones=ignore_leaf_bones,
+                force_connect_children=False,
+                automatic_bone_orientation=automatic_bone_orientation,
+                primary_bone_axis='Y',
+                secondary_bone_axis='X',
+                use_prepost_rot=True),
+            ".dae": lambda filename: bpy.ops.wm.collada_import(
+                filepath=str(filename), filter_blender=False,
+                filter_backup=False, filter_image=False,
+                filter_movie=False, filter_python=False,
+                filter_font=False, filter_sound=False,
+                filter_text=False, filter_btx=False,
+                filter_collada=True, filter_alembic=False,
+                filter_folder=True, filter_blenlib=False,
+                filemode=8, display_type='DEFAULT',
+                sort_method='FILE_SORT_ALPHA',
+                import_units=False, fix_orientation=True,
+                find_chains=True, auto_connect=True,
+                min_chain_length=0)
         }
-        if file_ext in file_loader:
-            numfiles += 1
-            bpy.ops.object.select_all(action='SELECT')
-            bpy.ops.object.delete(use_global=True)
+        if not file_ext in file_loader:
+            continue
+        numfiles += 1
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.ops.object.delete(use_global=True)
 
-            # remove all datablocks
-            for mesh in bpy.data.meshes:
-                bpy.data.meshes.remove(mesh, do_unlink=True)
-            for material in bpy.data.materials:
-                bpy.data.materials.remove(material, do_unlink=True)
-            for action in bpy.data.actions:
+        # remove all datablocks
+        for mesh in bpy.data.meshes:
+            bpy.data.meshes.remove(mesh, do_unlink=True)
+        for material in bpy.data.materials:
+            bpy.data.materials.remove(material, do_unlink=True)
+        for action in bpy.data.actions:
+            bpy.data.actions.remove(action, do_unlink=True)
+
+        # import FBX
+        file_loader[file_ext](file)
+
+        # namespace removal
+        if b_remove_namespace:
+            for obj in bpy.context.selected_objects:
+                remove_namespace(obj)
+        # namespace removal
+        elif b_unreal_bones:
+            for obj in bpy.context.selected_objects:
+                rename_bones(obj, 'unreal')
+
+        def getArmature(objects):
+            for a in objects:
+                if a.type == 'ARMATURE':
+                    return a
+            raise TypeError("No Armature found")
+
+        armature = getArmature(bpy.context.selected_objects)
+
+        # do hip to Root conversion
+        try:
+            for step in hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
+                        restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
+                        apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post):
+                #DEBUG log.error(str(step))
+                pass
+        except Exception as e:
+            log.error("ERROR hip_to_root raised %s when processing %s" % (str(e), file))
+            return -1
+
+
+        if (knee_offset != (0.0, 0.0, 0.0)):
+            apply_kneefix(armature, knee_offset,
+                          bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
+
+        # remove newly created orphan actions
+        for action in bpy.data.actions:
+            if action != armature.animation_data.action:
                 bpy.data.actions.remove(action, do_unlink=True)
 
-            # import FBX
-            file_loader[file_ext](file.path)
-
-            # namespace removal
-            if b_remove_namespace:
-                for obj in bpy.context.selected_objects:
-                    remove_namespace(obj)
-            # namespace removal
-            elif b_unreal_bones:
-                for obj in bpy.context.selected_objects:
-                    rename_bones(obj, 'unreal')
-
-            def getArmature(objects):
-                for a in objects:
-                    if a.type == 'ARMATURE':
-                        return a
-                raise TypeError("No Armature found")
-
-            armature = getArmature(bpy.context.selected_objects)
-
-            # do hip to Root conversion
-            try:
-                for step in hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
-                            restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
-                            apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post):
-                    #DEBUG log.error(str(step))
-                    pass
-            except Exception as e:
-                log.error("ERROR hip_to_root raised %s when processing %s" % (str(e), file.name))
-                return -1
-
-
-            if (knee_offset != (0.0, 0.0, 0.0)):
-                apply_kneefix(armature, knee_offset,
-                              bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
-
-            # remove newly created orphan actions
-            for action in bpy.data.actions:
-                if action != armature.animation_data.action:
-                    bpy.data.actions.remove(action, do_unlink=True)
-
-            # store file to disk
-            output_file = dest_dir + file.name[:-4] + ".fbx"
-            bpy.ops.export_scene.fbx(filepath=output_file,
-                                     version='BIN7400',
-                                     use_selection=False,
-                                     apply_unit_scale=False,
-                                     add_leaf_bones=add_leaf_bones,
-                                     axis_forward='-Z',
-                                     axis_up='Y',
-                                     mesh_smooth_type='FACE')
-            bpy.ops.object.select_all(action='SELECT')
-            bpy.ops.object.delete(use_global=False)
+        # store file to disk
+        output_file = dest_dir.joinpath(file.stem + ".fbx")
+        bpy.ops.export_scene.fbx(filepath=str(output_file),
+                                 version='BIN7400',
+                                 use_selection=False,
+                                 apply_unit_scale=False,
+                                 add_leaf_bones=add_leaf_bones,
+                                 axis_forward='-Z',
+                                 axis_up='Y',
+                                 mesh_smooth_type='FACE')
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.ops.object.delete(use_global=False)
     return numfiles
 
 

@@ -110,7 +110,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         description="Path to mixamorigs",
         maxlen = 256,
         default = "",
-        subtype='FILE_PATH')
+        subtype='DIR_PATH')
     add_leaf_bones = bpy.props.BoolProperty(
         name="Add Leaf Bones",
         description="If enabled, adds leaf bones on export when batchconverting",
@@ -120,7 +120,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         description="Where Processed rigs should be saved to",
         maxlen = 256,
         default = "",
-        subtype='FILE_PATH')
+        subtype='DIR_PATH')
     ignore_leaf_bones = bpy.props.BoolProperty(
         name="Ignore Leaf Bones",
         description="Ignore leaf bones on import",
