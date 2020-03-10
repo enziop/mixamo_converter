@@ -2,7 +2,7 @@
 
 '''
     Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
-    Copyright (C) 2017-2018  Enzio Probst
+    Copyright (C) 2017-2019  Enzio Probst
 
     Created by Enzio Probst
 
@@ -23,9 +23,9 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 1, 5),
-    "blender": (2, 7, 8),
-    "location": "3D View > Tool Shelve > Mixamo Tab",
+    "version": (1, 2, 0),
+    "blender": (2, 80, 0),
+    "location": "3D View > UI (Right Panel) > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
     "warning": "",  # used for warning icon and text in addons panel
     "wiki_url": "https://github.com/enziop/mixamo_converter/wiki",
@@ -174,7 +174,7 @@ class OBJECT_OT_RemoveNamespace(bpy.types.Operator):
     '''Button/Operator for removing namespaces from selection'''
     bl_idname = "mixamo.remove_namespace"
     bl_label = ""
-    description = "Removes all namespaces of selection (for single Convert)"
+    bl_description = "Removes all namespaces of selection (for single Convert)"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -192,7 +192,7 @@ class OBJECT_OT_UseBlenderBoneNames(bpy.types.Operator):
     '''Button/Operator for renaming bones to match unreal skeleton'''
     bl_idname = "mixamo.unreal_bones"
     bl_label = ""
-    description = "Renames bones to match the unreal skeleton (for single Convert)"
+    bl_description = "Renames bones to match the unreal skeleton (for single Convert)"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -210,7 +210,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle"
     bl_label = "Convert Single"
-    description = "Bakes rootmotion for a single, already imported rig."
+    bl_description = "Bakes rootmotion for a single, already imported rig."
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -254,7 +254,7 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.convertsingle_stepwise"
     bl_label = "Convert Single Stepwise"
-    description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
+    bl_description = "Bakes rootmotion for a single, already imported rig, executing step by step to review each step done."
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -305,7 +305,7 @@ class OBJECT_OT_ApplyRestoffset(bpy.types.Operator):
     '''Button/Operator for converting single Rig'''
     bl_idname = "mixamo.apply_restoffset"
     bl_label = "Apply Restoffset"
-    description = "Applies Restoffset to restpose and corrects animation"
+    bl_description = "Applies Restoffset to restpose and corrects animation"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -330,7 +330,7 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
     '''Button/Operator for starting batch conversion'''
     bl_idname = "mixamo.convertbatch"
     bl_label = "Batch Convert"
-    description = "Converts all mixamorigs from the [Input Path] and exports them to the [Ouput Path]"
+    bl_description = "Converts all mixamorigs from the [Input Path] and exports them to the [Ouput Path]"
 
     def execute(self, context):
         mixamo = context.scene.mixamo
@@ -378,12 +378,12 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
         return{ 'FINISHED'}
 
 
-class MixamoconvPanel(bpy.types.Panel):
+class MIXAMOCONV_VIEW_3D_PT_mixamoconv(bpy.types.Panel):
     """Creates a Tab in the Toolshelve in 3D_View"""
     bl_label = "Mixamo Rootbaker"
-    bl_idname = "ANIMATION_PT_mixamo"
+    bl_idname = "MIXAMOCONV_VIEW_3D_PT_mixamoconv"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = "Mixamo"
 
     def draw(self, context):
@@ -490,11 +490,23 @@ class MixamoconvPanel(bpy.types.Panel):
         row.operator("mixamo.convertbatch")
         status_row = box.row()
 
+classes = (
+    OBJECT_OT_RemoveNamespace,
+    OBJECT_OT_UseBlenderBoneNames,
+    OBJECT_OT_ConvertSingle,
+    OBJECT_OT_ConvertSingleStepwise,
+    OBJECT_OT_ApplyRestoffset,
+    OBJECT_OT_ConvertBatch,
+    MIXAMOCONV_VIEW_3D_PT_mixamoconv,
+)
+#register, unregister = bpy.utils.register_classes_factory(classes)
 
 def register():
     bpy.utils.register_class(MixamoPropertyGroup)
     bpy.types.Scene.mixamo = bpy.props.PointerProperty(type=MixamoPropertyGroup)
-    bpy.utils.register_module(__name__)
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    #bpy.utils.register_module(__name__)
     '''
     bpy.utils.register_class(OBJECT_OT_ConvertSingle)
     bpy.utils.register_class(OBJECT_OT_ConvertBatch)
@@ -503,7 +515,11 @@ def register():
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(MixamoPropertyGroup)
+    #bpy.utils.unregister_module(__name__)
+    
     '''
     bpy.utils.unregister_class(MixamoPropertyGroup)
     bpy.utils.unregister_class(OBJECT_OT_ConvertSingle)
