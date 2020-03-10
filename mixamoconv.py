@@ -208,7 +208,15 @@ def quaternion_cleanup(object, prevent_flips=True, prevent_inverts=True):
                 if change_amount > 1.0:
                     for j in range(4):
                         zipped[i][j].co.y *= -1.0
-            
+
+def apply_foot_bone_workaround(armature, bonenames=['RightToeBase', 'LeftToeBase']):
+    """workaround for the twisting of the foot bones in some skeletons"""
+    if bpy.context.scene.mixamo.b_unreal_bones:
+        bonenames = ["ball_r", "ball_l"]
+
+    bpy.ops.object.mode_set(mode='EDIT')
+    for name in bonenames:
+        armature.data.edit_bones[name].roll = pi
 
 class Status:
     def __init__(self, msg, status_type='default'):
@@ -218,7 +226,7 @@ class Status:
         return str(self.msg)
 
 def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0, restoffset=(0, 0, 0),
-                hipname='', fixbind=True, apply_rotation=True, apply_scale=False, quaternion_clean_pre=True, quaternion_clean_post=True):
+                hipname='', fixbind=True, apply_rotation=True, apply_scale=False, quaternion_clean_pre=True, quaternion_clean_post=True, foot_bone_workaround=False):
     """function to bake hipmotion to RootMotion in MixamoRigs"""
 
     yield Status("starting hip_to_root")
@@ -253,6 +261,9 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     if quaternion_clean_pre:
         quaternion_cleanup(root)
         yield Status("quaternion clean pre")
+
+    if foot_bone_workaround:
+        apply_foot_bone_workaround(armature)
 
     # apply restoffset to restpose and correct animation
     apply_restoffset(root, hips, restoffset)
@@ -413,7 +424,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
 def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0,
                       restoffset=(0, 0, 0), hipname='', fixbind=True, apply_rotation=True, apply_scale=False,
-                      b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True, automatic_bone_orientation=True, quaternion_clean_pre=True, quaternion_clean_post=True):
+                      b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True, automatic_bone_orientation=True, quaternion_clean_pre=True, quaternion_clean_post=True, foot_bone_workaround=False):
     """Batch Convert MixamoRigs"""
 
     bpy.context.scene.unit_settings.system = 'METRIC'
@@ -490,7 +501,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             try:
                 for step in hip_to_root(armature, use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
                             restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation,
-                            apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post):
+                            apply_scale=apply_scale, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post, foot_bone_workaround=foot_bone_workaround):
                     #DEBUG log.error(str(step))
                     pass
             except Exception as e:
