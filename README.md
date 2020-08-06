@@ -17,10 +17,10 @@ Blender 2.78 or newer needed to work
 * if you want to keep it enabled over multiple blender sessions you can click "save user preferences" on the bottom of the window
 
 ## Usage
-The Addon UI is located in the Toolshelve of the 3D view.
-You can open it by pressing T with the mouse in the 3D View
-or with the little plus sign on the left side of the 3D View
-In the Toolshelve there are several tabs on the left side,
+The Addon UI is located in the UI Region of the 3D view.
+You can open it by pressing N with the mouse in the 3D View
+or with the little arrow on the right side of the 3D View
+In the UI Area there are several tabs on the right side,
 one of them should be named Mixamo
 
 ### Options: [Use Z] [On Ground]
@@ -117,7 +117,8 @@ so only use it in a newly startet instance of blender or an empty scene
 
 #### Importing a mixamo character into unreal with and retarget animations
 The video starts showing how to install the mixamoconv plugin into blender.
-Then it describe how to quickly batch convert a mixamo character (same procedure for anims), import it to unreal, reterget the mixamo skeleton and retarget some maniquine anims to the mixamo skeleton. 
+Then it describe how to quickly batch convert a mixamo character (same procedure for anims), import it to unreal, reterget the mixamo skeleton and retarget some maniquine anims to the mixamo skeleton.
+Remember the converter is now located in the Right Panel (UI) which can be opened by pressing N.
 
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/z97w4vrm8Eo/0.jpg)](https://www.youtube.com/watch?v=z97w4vrm8Eo)    
