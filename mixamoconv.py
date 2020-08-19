@@ -417,7 +417,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
 def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, on_ground=True, use_rotation=True, scale=1.0,
                       restoffset=(0, 0, 0), hipname='', fixbind=True, apply_rotation=True, apply_scale=False,
-                      b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True, automatic_bone_orientation=True, quaternion_clean_pre=True, quaternion_clean_post=True, foot_bone_workaround=False):
+                      b_remove_namespace=True, b_unreal_bones=False, add_leaf_bones=False, knee_offset=(0, 0, 0), ignore_leaf_bones=True, automatic_bone_orientation=True, quaternion_clean_pre=True, quaternion_clean_post=True, foot_bone_workaround=False, discover_recursive=True):
     """Batch Convert MixamoRigs"""
     
     source_dir = Path(source_dir)
@@ -429,7 +429,14 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
     numfiles = 0
     for file in source_dir.iterdir():
         if not file.is_file():
-            continue
+            if not discover_recursive:
+                continue
+            if file.stem in ["OUTPUT", "output"]:
+                continue
+            batch_hip_to_root(str(source_dir.joinpath(file.stem)), str(dest_dir.joinpath(file.stem)),
+                      use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
+                      restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation, apply_scale=apply_scale,
+                      b_remove_namespace=b_remove_namespace, b_unreal_bones=b_unreal_bones, add_leaf_bones=add_leaf_bones, knee_offset=knee_offset, ignore_leaf_bones=ignore_leaf_bones, automatic_bone_orientation=automatic_bone_orientation, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post, foot_bone_workaround=foot_bone_workaround, discover_recursive=discover_recursive)
         file_ext = file.suffix
         file_loader = {
             ".fbx": lambda filename: bpy.ops.import_scene.fbx(
@@ -520,6 +527,8 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 bpy.data.actions.remove(action, do_unlink=True)
 
         # store file to disk
+        if not dest_dir.exists():
+            dest_dir.mkdir()
         output_file = dest_dir.joinpath(file.stem + ".fbx")
         bpy.ops.export_scene.fbx(filepath=str(output_file),
                                  use_selection=False,

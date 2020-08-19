@@ -111,6 +111,10 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         maxlen = 256,
         default = "",
         subtype='DIR_PATH')
+    discover_recursive: bpy.props.BoolProperty(
+        name="Recursive",
+        description="Discover animation files recursive",
+        default=True)
     add_leaf_bones: bpy.props.BoolProperty(
         name="Add Leaf Bones",
         description="If enabled, adds leaf bones on export when batchconverting",
@@ -370,7 +374,8 @@ class OBJECT_OT_ConvertBatch(bpy.types.Operator):
             automatic_bone_orientation = mixamo.automatic_bone_orientation,
             quaternion_clean_pre=mixamo.quaternion_clean_pre,
             quaternion_clean_post=mixamo.quaternion_clean_post,
-            foot_bone_workaround=mixamo.foot_bone_workaround)
+            foot_bone_workaround=mixamo.foot_bone_workaround,
+            discover_recursive=mixamo.discover_recursive)
         if numfiles == -1:
             self.report({'ERROR_INVALID_INPUT'}, 'Error: Not all files could be converted, look in console for more information')
             return{ 'CANCELLED'}
@@ -470,6 +475,8 @@ class MIXAMOCONV_VIEW_3D_PT_mixamoconv(bpy.types.Panel):
         row = box.row()
         row.prop(scene.mixamo, "inpath")
         if scene.mixamo.advanced:
+            row = box.row()
+            row.prop(scene.mixamo, "discover_recursive")
             row = box.row()
             row.prop(scene.mixamo, "ignore_leaf_bones")
             row.prop(scene.mixamo, "automatic_bone_orientation")
