@@ -112,7 +112,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         default = "",
         subtype='DIR_PATH')
     discover_recursive: bpy.props.BoolProperty(
-        name="Recursive",
+        name="Enable Recursive",
         description="Discover animation files recursive",
         default=True)
     add_leaf_bones: bpy.props.BoolProperty(
@@ -476,8 +476,6 @@ class MIXAMOCONV_VIEW_3D_PT_mixamoconv(bpy.types.Panel):
         row.prop(scene.mixamo, "inpath")
         if scene.mixamo.advanced:
             row = box.row()
-            row.prop(scene.mixamo, "discover_recursive")
-            row = box.row()
             row.prop(scene.mixamo, "ignore_leaf_bones")
             row.prop(scene.mixamo, "automatic_bone_orientation")
 
@@ -492,6 +490,9 @@ class MIXAMOCONV_VIEW_3D_PT_mixamoconv(bpy.types.Panel):
 
 
         # button to start batch conversion
+        if scene.mixamo.advanced:
+            row = box.row()
+            row.prop(scene.mixamo, "discover_recursive", toggle=True)
         row = box.row()
         row.scale_y = 2.0
         row.operator("mixamo.convertbatch")
