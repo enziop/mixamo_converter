@@ -435,7 +435,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 continue
             if str(file) == str(dest_dir):
                 continue
-            numfilex += batch_hip_to_root(str(source_dir.joinpath(file.stem)), str(dest_dir.joinpath(file.stem)),
+            numfiles += batch_hip_to_root(str(source_dir.joinpath(file.stem)), str(dest_dir.joinpath(file.stem)),
                       use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
                       restoffset=restoffset, hipname=hipname, fixbind=fixbind, apply_rotation=apply_rotation, apply_scale=apply_scale,
                       b_remove_namespace=b_remove_namespace, b_unreal_bones=b_unreal_bones, add_leaf_bones=add_leaf_bones, knee_offset=knee_offset, ignore_leaf_bones=ignore_leaf_bones, automatic_bone_orientation=automatic_bone_orientation, quaternion_clean_pre=quaternion_clean_pre, quaternion_clean_post=quaternion_clean_post, foot_bone_workaround=foot_bone_workaround, discover_recursive=discover_recursive)
