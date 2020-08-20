@@ -433,7 +433,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
                 continue
             if file.stem in ["OUTPUT", "output"]:
                 continue
-            if str(file) == dest_dir:
+            if str(file) == str(dest_dir):
                 continue
             batch_hip_to_root(str(source_dir.joinpath(file.stem)), str(dest_dir.joinpath(file.stem)),
                       use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
