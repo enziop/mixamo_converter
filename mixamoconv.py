@@ -428,10 +428,12 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
 
     numfiles = 0
     for file in source_dir.iterdir():
-        if not file.is_file():
+        if file.is_dir():
             if not discover_recursive:
                 continue
             if file.stem in ["OUTPUT", "output"]:
+                continue
+            if str(file) == dest_dir:
                 continue
             batch_hip_to_root(str(source_dir.joinpath(file.stem)), str(dest_dir.joinpath(file.stem)),
                       use_x=use_x, use_y=use_y, use_z=use_z, on_ground=on_ground, use_rotation=use_rotation, scale=scale,
@@ -528,7 +530,7 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
 
         # store file to disk
         if not dest_dir.exists():
-            dest_dir.mkdir()
+            dest_dir.mkdir(parents=True)
         output_file = dest_dir.joinpath(file.stem + ".fbx")
         bpy.ops.export_scene.fbx(filepath=str(output_file),
                                  use_selection=False,
