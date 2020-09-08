@@ -26,7 +26,7 @@ import logging
 import bpy
 from bpy_types import Object
 from math import pi
-from mathutils import Quaternion
+from mathutils import Vector, Quaternion
 
 log = logging.getLogger(__name__)
 #log.setLevel('DEBUG')
@@ -510,9 +510,9 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             return -1
 
 
-        if (knee_offset != (0.0, 0.0, 0.0)):
+        if (Vector(knee_offset).length > 0.0):
             apply_kneefix(armature, knee_offset,
-                          bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
+                          bonenames=bpy.context.scene.mixamo.knee_bones.split(','))
 
         # remove newly created orphan actions
         for action in bpy.data.actions:
