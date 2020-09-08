@@ -93,13 +93,14 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     knee_offset = bpy.props.FloatVectorProperty(
         name="Knee Offset",
         description="Offset knee joints by this. Use to fix flipping legs.",
-        default=(0.0, 0.0, 0.0))
+        default=(0.0, 0.0, 0.0),
+        subtype='TRANSLATION')
     knee_bones = bpy.props.StringProperty(
         name="Knee Bones",
         description="Names of knee bones to offset. Seperate names with commas.",
         maxlen = 256,
         default = "RightUpLeg,LeftUpLeg",
-        subtype='BYTE_STRING')
+        subtype='NONE')
     force_overwrite = bpy.props.BoolProperty(
         name="Force Overwrite",
         description="If enabled, overwrites files if output path is the same as input",
@@ -135,7 +136,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         description="Additional Hipname to search for if not MixamoRig",
         maxlen = 256,
         default = "",
-        subtype='BYTE_STRING')
+        subtype='NONE')
     b_remove_namespace = bpy.props.BoolProperty(
         name="Remove Namespace",
         description="Removes Naespaces from objects and bones",
