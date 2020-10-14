@@ -125,7 +125,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     ignore_leaf_bones = bpy.props.BoolProperty(
         name="Ignore Leaf Bones",
         description="Ignore leaf bones on import",
-        default=True)
+        default=False)
     automatic_bone_orientation = bpy.props.BoolProperty(
         name="Automatic Bone Orientation",
         description="Try to align the major bone axis with the bone children",
