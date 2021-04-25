@@ -2,7 +2,7 @@
 
 '''
     Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
-    Copyright (C) 2017-2020  Enzio Probst
+    Copyright (C) 2017-2021  Enzio Probst
 
     Created by Enzio Probst
 
@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 2, 2),
+    "version": (1, 2, 3),
     "blender": (2, 80, 0),
     "location": "3D View > UI (Right Panel) > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
