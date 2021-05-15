@@ -2,7 +2,7 @@
 
 '''
     Copyright (C) 2017-2018  Antonio 'GNUton' Aloisio
-    Copyright (C) 2017-2019  Enzio Probst
+    Copyright (C) 2017-2021  Enzio Probst
 
     Created by Enzio Probst
 
@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Mixamo Converter",
     "author": "Enzio Probst",
-    "version": (1, 2, 0),
+    "version": (1, 2, 3),
     "blender": (2, 80, 0),
     "location": "3D View > UI (Right Panel) > Mixamo Tab",
     "description": ("Script to bake Root motion for Mixamo Animations"),
@@ -93,13 +93,14 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     knee_offset: bpy.props.FloatVectorProperty(
         name="Knee Offset",
         description="Offset knee joints by this. Use to fix flipping legs.",
-        default=(0.0, 0.0, 0.0))
+        default=(0.0, 0.0, 0.0),
+        subtype='TRANSLATION')
     knee_bones: bpy.props.StringProperty(
         name="Knee Bones",
         description="Names of knee bones to offset. Seperate names with commas.",
         maxlen = 256,
         default = "RightUpLeg,LeftUpLeg",
-        subtype='BYTE_STRING')
+        subtype='NONE')
     force_overwrite: bpy.props.BoolProperty(
         name="Force Overwrite",
         description="If enabled, overwrites files if output path is the same as input",
@@ -128,7 +129,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
     ignore_leaf_bones: bpy.props.BoolProperty(
         name="Ignore Leaf Bones",
         description="Ignore leaf bones on import",
-        default=True)
+        default=False)
     automatic_bone_orientation: bpy.props.BoolProperty(
         name="Automatic Bone Orientation",
         description="Try to align the major bone axis with the bone children",
@@ -139,7 +140,7 @@ class MixamoPropertyGroup(bpy.types.PropertyGroup):
         description="Additional Hipname to search for if not MixamoRig",
         maxlen = 256,
         default = "",
-        subtype='BYTE_STRING')
+        subtype='NONE')
     b_remove_namespace: bpy.props.BoolProperty(
         name="Remove Namespace",
         description="Removes Naespaces from objects and bones",
@@ -234,7 +235,7 @@ class OBJECT_OT_ConvertSingle(bpy.types.Operator):
             use_rotation = mixamo.use_rotation,
             scale = mixamo.scale,
             restoffset = mixamo.restoffset,
-            hipname = mixamo.hipname.decode('UTF-8'),
+            hipname = mixamo.hipname,
             fixbind = mixamo.fixbind,
             apply_rotation = mixamo.apply_rotation,
             apply_scale = mixamo.apply_scale,
@@ -282,7 +283,7 @@ class OBJECT_OT_ConvertSingleStepwise(bpy.types.Operator):
                 use_rotation = mixamo.use_rotation,
                 scale = mixamo.scale,
                 restoffset = mixamo.restoffset,
-                hipname = mixamo.hipname.decode('UTF-8'),
+                hipname = mixamo.hipname,
                 fixbind = mixamo.fixbind,
                 apply_rotation = mixamo.apply_rotation,
                 apply_scale = mixamo.apply_scale,

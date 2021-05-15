@@ -26,7 +26,7 @@ import logging
 import bpy
 from bpy_types import Object
 from math import pi
-from mathutils import Quaternion
+from mathutils import Vector, Quaternion
 
 log = logging.getLogger(__name__)
 #log.setLevel('DEBUG')
@@ -273,70 +273,79 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     z_offset = hiplocation_world[2]
 
     # Create helper to bake the root motion
-    bpy.ops.object.empty_add(type='ARROWS', radius=1, align='WORLD', location=(0, 0, 0))
-    rootBaker = bpy.context.object
-    rootBaker.name = "rootBaker"
-    rootBaker.rotation_mode = 'QUATERNION'
+    rootbaker = bpy.data.objects.new(name="rootbaker", object_data=None)
+    rootbaker.rotation_mode = 'QUATERNION'
 
     if use_z:
         print("using z")
-        bpy.ops.object.constraint_add(type='COPY_LOCATION')
-        bpy.context.object.constraints["Copy Location"].name = "Copy Z_Loc"
-        bpy.context.object.constraints["Copy Z_Loc"].target = root
-        bpy.context.object.constraints["Copy Z_Loc"].subtarget = hips.name
-        bpy.context.object.constraints["Copy Z_Loc"].use_x = False
-        bpy.context.object.constraints["Copy Z_Loc"].use_y = False
-        bpy.context.object.constraints["Copy Z_Loc"].use_z = True
-        bpy.context.object.constraints["Copy Z_Loc"].use_offset = True
+        c_rootbaker_copy_z_loc = rootbaker.constraints.new(type='COPY_LOCATION')
+        c_rootbaker_copy_z_loc.name = "Copy Z_Loc"
+        c_rootbaker_copy_z_loc.target = root
+        c_rootbaker_copy_z_loc.subtarget = hips.name
+        c_rootbaker_copy_z_loc.use_x = False
+        c_rootbaker_copy_z_loc.use_y = False
+        c_rootbaker_copy_z_loc.use_z = True
+        c_rootbaker_copy_z_loc.use_offset = True
         if on_ground:
             print("using on ground")
-            rootBaker.location[2] = -z_offset
-            bpy.ops.object.constraint_add(type='LIMIT_LOCATION')
-            bpy.context.object.constraints["Limit Location"].use_min_z = True
+            rootbaker.location[2] = -z_offset
+            c_on_ground = rootbaker.constraints.new(type='LIMIT_LOCATION')
+            c_on_ground.name = "On Ground"
+            c_on_ground.use_min_z = True
 
-    bpy.ops.object.constraint_add(type='COPY_LOCATION')
-    bpy.context.object.constraints["Copy Location"].use_x = use_x
-    bpy.context.object.constraints["Copy Location"].use_y = use_y
-    bpy.context.object.constraints["Copy Location"].use_z = False
-    bpy.context.object.constraints["Copy Location"].target = root
-    bpy.context.object.constraints["Copy Location"].subtarget = hips.name
 
-    bpy.ops.object.constraint_add(type='COPY_ROTATION')
-    bpy.context.object.constraints["Copy Rotation"].target = root
-    bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
-    bpy.context.object.constraints["Copy Rotation"].use_y = False
-    bpy.context.object.constraints["Copy Rotation"].use_x = False
-    bpy.context.object.constraints["Copy Rotation"].use_z = use_rotation
-    yield Status("rootBaker creater")
+    c_rootbaker_copy_loc = rootbaker.constraints.new(type='COPY_LOCATION')
+    c_rootbaker_copy_loc.use_x = use_x
+    c_rootbaker_copy_loc.use_y = use_y
+    c_rootbaker_copy_loc.use_z = False
+    c_rootbaker_copy_loc.target = root
+    c_rootbaker_copy_loc.subtarget = hips.name
+
+    c_rootbaker_copy_rot = rootbaker.constraints.new(type='COPY_ROTATION')
+    c_rootbaker_copy_rot.target = root
+    c_rootbaker_copy_rot.subtarget = hips.name
+    c_rootbaker_copy_rot.use_y = False
+    c_rootbaker_copy_rot.use_x = False
+    c_rootbaker_copy_rot.use_z = use_rotation
+    bpy.context.scene.collection.objects.link(rootbaker)
+    yield Status("rootbaker created")
+
+    bpy.ops.object.select_all(action='DESELECT')
+    rootbaker.select_set(True)
+    bpy.context.view_layer.objects.active = rootbaker
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
-    yield Status("rootBaker baked")
-    quaternion_cleanup(rootBaker)
-    yield Status("rootBaker quatCleanup")
+    yield Status("rootbaker baked")
+    quaternion_cleanup(rootbaker)
+    yield Status("rootbaker quat_cleanup")
 
     # Create helper to bake hipmotion in Worldspace
-    bpy.ops.object.empty_add(type='ARROWS', radius=1, align='WORLD', location=(0, 0, 0))
-    hipsBaker = bpy.context.object
-    hipsBaker.name = "hipsBaker"
-    hipsBaker.rotation_mode = 'QUATERNION'
+    hipsbaker = bpy.data.objects.new(name="hipsbaker", object_data=None)
+    hipsbaker.rotation_mode = 'QUATERNION'
 
-    bpy.ops.object.constraint_add(type='COPY_LOCATION')
-    bpy.context.object.constraints["Copy Location"].target = root
-    bpy.context.object.constraints["Copy Location"].subtarget = hips.name
+    c_hipsbaker_copy_loc = hipsbaker.constraints.new(type='COPY_LOCATION')
+    c_hipsbaker_copy_loc.target = root
+    c_hipsbaker_copy_loc.subtarget = hips.name
 
-    bpy.ops.object.constraint_add(type='COPY_ROTATION')
-    bpy.context.object.constraints["Copy Rotation"].target = root
-    bpy.context.object.constraints["Copy Rotation"].subtarget = hips.name
-    yield Status("hipsBaker creater")
+    c_hipsbaker_copy_rot = hipsbaker.constraints.new(type='COPY_ROTATION')
+    c_hipsbaker_copy_rot.target = root
+    c_hipsbaker_copy_rot.subtarget = hips.name
+    bpy.context.scene.collection.objects.link(hipsbaker)
+    yield Status("hipsbaker created")
+
+    bpy.ops.object.select_all(action='DESELECT')
+    hipsbaker.select_set(True)
+    bpy.context.view_layer.objects.active = hipsbaker
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
-    yield Status("hipsBaker baked")
-    quaternion_cleanup(hipsBaker)
-    yield Status("hipsBaker quatClenaup")
+    yield Status("hipsbaker baked")
+    quaternion_cleanup(hipsbaker)
+    yield Status("hipsbaker quatClenaup")
 
     # select armature
+    bpy.ops.object.select_all(action='DESELECT')
     root.select_set(True)
     bpy.context.view_layer.objects.active = root
 
@@ -345,48 +354,47 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
         yield Status("apply transform")
 
     # Bake Root motion to Armature (root)
-    bpy.ops.object.constraint_add(type='COPY_LOCATION')
-    bpy.context.object.constraints["Copy Location"].target = rootBaker
+    c_root_copy_loc = root.constraints.new(type='COPY_LOCATION')
+    c_root_copy_loc.target = rootbaker
 
-    bpy.ops.object.constraint_add(type='COPY_ROTATION')
-    bpy.context.object.constraints["Copy Rotation"].target = bpy.data.objects["rootBaker"]
-    bpy.context.object.constraints["Copy Rotation"].use_offset = True
-    yield Status("root constrained to rootBaker")
+    c_root_copy_rot = root.constraints.new(type='COPY_ROTATION')
+    c_root_copy_rot.target = rootbaker
+    c_root_copy_rot.use_offset = True
+    yield Status("root constrained to rootbaker")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
 
-    yield Status("rootBaker baked back")
+    yield Status("rootbaker baked back")
     quaternion_cleanup(root)
     yield Status("root quaternion cleanup")
-    hipsBaker.select_set(False)
+    hipsbaker.select_set(False)
 
     bpy.ops.object.mode_set(mode='POSE')
     hips.bone.select = True
     root.data.bones.active = hips.bone
 
-    bpy.ops.pose.constraint_add(type='COPY_LOCATION')
-    hips.constraints["Copy Location"].target = hipsBaker
-    bpy.ops.pose.constraint_add(type='COPY_ROTATION')
-    hips.constraints["Copy Rotation"].target = hipsBaker
-    yield Status("hips constrained to hipsBaker")
+    c_hips_copy_loc = hips.constraints.new(type='COPY_LOCATION')
+    c_hips_copy_loc.target = hipsbaker
+    c_hips_copy_rot = hips.constraints.new(type='COPY_ROTATION')
+    c_hips_copy_rot.target = hipsbaker
+    yield Status("hips constrained to hipsbaker")
 
     bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'POSE'})
-    yield Status("hipsBaker baked back")
+    bpy.ops.object.mode_set(mode='OBJECT')
+    yield Status("hipsbaker baked back")
 
     if quaternion_clean_post:
         quaternion_cleanup(root)
         yield Status("root quaternion cleanup")
 
     # Delete helpers
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
+    bpy.data.actions.remove(hipsbaker.animation_data.action)
+    bpy.data.actions.remove(rootbaker.animation_data.action)
+    bpy.data.objects.remove(hipsbaker)
+    bpy.data.objects.remove(rootbaker)
 
-    hipsBaker.select_set(True)
-    rootBaker.select_set(True)
-
-    bpy.ops.object.delete(use_global=False)
     yield Status("bakers deleted")
 
     # bind armature to dummy mesh if it doesn't have any
@@ -519,9 +527,9 @@ def batch_hip_to_root(source_dir, dest_dir, use_x=True, use_y=True, use_z=True, 
             return -1
 
 
-        if (knee_offset != (0.0, 0.0, 0.0)):
+        if (Vector(knee_offset).length > 0.0):
             apply_kneefix(armature, knee_offset,
-                          bonenames=bpy.context.scene.mixamo.knee_bones.decode('utf-8').split(','))
+                          bonenames=bpy.context.scene.mixamo.knee_bones.split(','))
 
         # remove newly created orphan actions
         for action in bpy.data.actions:
