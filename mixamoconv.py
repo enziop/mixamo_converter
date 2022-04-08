@@ -314,7 +314,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     rootbaker.select_set(True)
     bpy.context.view_layer.objects.active = rootbaker
 
-    bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
+    bpy.ops.nla.bake(frame_start=int(framerange[0]), frame_end=int(framerange[1]), step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
     yield Status("rootbaker baked")
     quaternion_cleanup(rootbaker)
@@ -338,7 +338,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     hipsbaker.select_set(True)
     bpy.context.view_layer.objects.active = hipsbaker
 
-    bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
+    bpy.ops.nla.bake(frame_start=int(framerange[0]), frame_end=int(framerange[1]), step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=False, bake_types={'OBJECT'})
     yield Status("hipsbaker baked")
     quaternion_cleanup(hipsbaker)
@@ -362,7 +362,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     c_root_copy_rot.use_offset = True
     yield Status("root constrained to rootbaker")
 
-    bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
+    bpy.ops.nla.bake(frame_start=int(framerange[0]), frame_end=int(framerange[1]), step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'OBJECT'})
 
     yield Status("rootbaker baked back")
@@ -380,7 +380,7 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
     c_hips_copy_rot.target = hipsbaker
     yield Status("hips constrained to hipsbaker")
 
-    bpy.ops.nla.bake(frame_start=framerange[0], frame_end=framerange[1], step=1, only_selected=True, visual_keying=True,
+    bpy.ops.nla.bake(frame_start=int(framerange[0]), frame_end=int(framerange[1]), step=1, only_selected=True, visual_keying=True,
                      clear_constraints=True, clear_parents=False, use_current_action=True, bake_types={'POSE'})
     bpy.ops.object.mode_set(mode='OBJECT')
     yield Status("hipsbaker baked back")
