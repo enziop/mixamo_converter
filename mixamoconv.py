@@ -233,6 +233,12 @@ def hip_to_root(armature, use_x=True, use_y=True, use_z=True, on_ground=True, us
 
     root = armature
     root.name = "root"
+    
+    """Fixes incorrect root renaming"""
+    """Yes this is a dumb fix but it works"""
+    root.name = "root"
+    root.name = "root"
+    
     root.rotation_mode = 'QUATERNION'
     framerange = root.animation_data.action.frame_range
 
